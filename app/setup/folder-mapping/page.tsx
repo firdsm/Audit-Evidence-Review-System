@@ -1,19 +1,13 @@
 import React from 'react'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireSuperAdmin } from '@/lib/auth'
 import MappingClient from './MappingClient'
 
 export default async function FolderMappingSetupPage() {
   const supabase = await createClient()
 
-  // 1. Verify user session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  // 1. Verify user session & role (superadmin only)
+  await requireSuperAdmin()
 
   // 2. Fetch all institutions for selection dropdown
   const { data: institutions, error: instError } = await supabase

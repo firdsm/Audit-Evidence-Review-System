@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { listFoldersInFolder } from '@/lib/google-drive'
 import { createClient } from '@/lib/supabase/server'
+import { requireSuperAdminApi } from '@/lib/auth'
 
 export async function POST() {
   try {
@@ -13,6 +14,10 @@ export async function POST() {
     }
 
     const supabase = await createClient()
+
+    // 1a. Role guard — hanya superadmin
+    const authError = await requireSuperAdminApi()
+    if (authError) return authError
 
     // 1. Fetch Level 1 folders (Categories)
     const level1Folders = await listFoldersInFolder(rootFolderId)

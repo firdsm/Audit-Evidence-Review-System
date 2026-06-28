@@ -1,5 +1,6 @@
 import React from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { getAuditorRole } from '@/lib/auth'
 import DashboardClient from './DashboardClient'
 
 export default async function DashboardPage() {
@@ -9,6 +10,10 @@ export default async function DashboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  // 1b. Fetch role
+  const role = await getAuditorRole()
+  const isSuperAdmin = role === 'superadmin'
 
   // 2. Fetch total count of indicators
   const { count: totalIndicatorsCount, error: indError } = await supabase
@@ -74,6 +79,7 @@ export default async function DashboardPage() {
       initialInstitutions={institutionsData}
       totalIndicators={totalIndicatorsCount || 0}
       userEmail={user?.email || ''}
+      isSuperAdmin={isSuperAdmin}
     />
   )
 }

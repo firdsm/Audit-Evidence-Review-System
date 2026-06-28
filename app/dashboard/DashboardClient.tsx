@@ -18,12 +18,14 @@ interface DashboardClientProps {
   initialInstitutions: InstitutionData[]
   totalIndicators: number
   userEmail?: string
+  isSuperAdmin?: boolean
 }
 
 export default function DashboardClient({
   initialInstitutions,
   totalIndicators,
   userEmail,
+  isSuperAdmin = false,
 }: DashboardClientProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
@@ -97,14 +99,39 @@ export default function DashboardClient({
             </p>
           </div>
 
-          <div>
-            <Link
-              href="/sync"
-              className="px-5 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80 text-zinc-200 text-sm font-medium rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-black/30"
-            >
-              <RefreshCw size={16} className="text-zinc-400" />
-              <span>Sync Google Drive</span>
-            </Link>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <>
+                <Link
+                  href="/admin/users"
+                  className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-violet-700/60 hover:bg-violet-950/30 text-zinc-200 hover:text-violet-300 text-sm font-medium rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-black/30"
+                  title="Kelola Role Auditor"
+                >
+                  <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Kelola User</span>
+                </Link>
+                <Link
+                  href="/setup/folder-mapping"
+                  className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80 text-zinc-200 text-sm font-medium rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-black/30"
+                  title="Folder Mapping"
+                >
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  <span>Folder Mapping</span>
+                </Link>
+                <Link
+                  href="/sync"
+                  className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80 text-zinc-200 text-sm font-medium rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-black/30"
+                  title="Sync Google Drive"
+                >
+                  <RefreshCw size={16} className="text-zinc-400" />
+                  <span>Sync Drive</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
