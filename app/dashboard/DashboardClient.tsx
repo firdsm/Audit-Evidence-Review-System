@@ -151,7 +151,7 @@ export default function DashboardClient({
 
             -mx-6 px-6: extend background full-width tanpa keluar dari max-w
         ──────────────────────────────────────────────────────────────────── */}
-        <div className="sticky top-[65px] z-10 -mx-6 px-4 py-8 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/50">
+        <div className="sticky top-[65px] z-10 -mx-6 px-4 py-6 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/50">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
             <div className="relative flex-1">
