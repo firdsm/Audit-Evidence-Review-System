@@ -11,9 +11,16 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // 1b. Fetch role
+  // 1b. Fetch role + name dari tabel auditors
   const role = await getAuditorRole()
   const isSuperAdmin = role === 'superadmin'
+
+  const { data: auditorData } = await supabase
+    .from('auditors')
+    .select('name')
+    .eq('email', user?.email || '')
+    .single()
+  const userName = auditorData?.name || ''
 
   // 2. Fetch total count of indicators
   const { count: totalIndicatorsCount, error: indError } = await supabase
@@ -79,6 +86,7 @@ export default async function DashboardPage() {
       initialInstitutions={institutionsData}
       totalIndicators={totalIndicatorsCount || 0}
       userEmail={user?.email || ''}
+      userName={userName}
       isSuperAdmin={isSuperAdmin}
     />
   )

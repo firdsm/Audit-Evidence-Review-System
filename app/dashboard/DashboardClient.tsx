@@ -1,10 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { RefreshCw } from 'lucide-react'
-import { logout } from '../login/actions'
+import UserDropdown from '@/components/UserDropdown'
 
 interface InstitutionData {
   id: string
@@ -18,13 +16,15 @@ interface DashboardClientProps {
   initialInstitutions: InstitutionData[]
   totalIndicators: number
   userEmail?: string
+  userName?: string
   isSuperAdmin?: boolean
 }
 
 export default function DashboardClient({
   initialInstitutions,
   totalIndicators,
-  userEmail,
+  userEmail = '',
+  userName = '',
   isSuperAdmin = false,
 }: DashboardClientProps) {
   const router = useRouter()
@@ -47,8 +47,9 @@ export default function DashboardClient({
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(120,119,198,0.08),transparent_50%)]" />
 
       {/* Navigation */}
-      <nav className="relative z-10 border-b border-zinc-800 bg-zinc-900/40 backdrop-blur-md px-6 py-4">
+      <nav className="relative z-20 border-b border-zinc-800 bg-zinc-900/40 backdrop-blur-md px-6 py-3">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
+          {/* Brand */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/10">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,74 +66,26 @@ export default function DashboardClient({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end text-sm">
-              <span className="text-zinc-300 font-medium">{userEmail}</span>
-              <span className="text-xs text-blue-500">Auditor</span>
-            </div>
-            <form action={logout}>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-zinc-800/80 hover:bg-red-950/40 hover:text-red-400 border border-zinc-700/60 hover:border-red-900/60 rounded-xl text-zinc-300 text-sm font-medium transition-all duration-200 cursor-pointer flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Logout</span>
-              </button>
-            </form>
-          </div>
+          {/* User Dropdown */}
+          <UserDropdown
+            userName={userName}
+            userEmail={userEmail}
+            isSuperAdmin={isSuperAdmin}
+          />
         </div>
       </nav>
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-10 space-y-6">
-        
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-              Daftar Instansi
-            </h1>
-            <p className="text-sm text-zinc-400">
-              Pilih instansi untuk melakukan penilaian audit bukti pelayanan publik.
-            </p>
-          </div>
 
-          <div className="flex items-center gap-2">
-            {isSuperAdmin && (
-              <>
-                <Link
-                  href="/admin/users"
-                  className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-violet-700/60 hover:bg-violet-950/30 text-zinc-200 hover:text-violet-300 text-sm font-medium rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-black/30"
-                  title="Kelola Role Auditor"
-                >
-                  <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span>Kelola User</span>
-                </Link>
-                <Link
-                  href="/setup/folder-mapping"
-                  className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80 text-zinc-200 text-sm font-medium rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-black/30"
-                  title="Folder Mapping"
-                >
-                  <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
-                  <span>Folder Mapping</span>
-                </Link>
-                <Link
-                  href="/sync"
-                  className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80 text-zinc-200 text-sm font-medium rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-black/30"
-                  title="Sync Google Drive"
-                >
-                  <RefreshCw size={16} className="text-zinc-400" />
-                  <span>Sync Drive</span>
-                </Link>
-              </>
-            )}
-          </div>
+        {/* Header Section */}
+        <div className="space-y-1">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+            Daftar Instansi
+          </h1>
+          <p className="text-sm text-zinc-400">
+            Pilih instansi untuk melakukan penilaian audit bukti pelayanan publik.
+          </p>
         </div>
 
         {/* Filter Section */}
@@ -197,7 +150,7 @@ export default function DashboardClient({
                 <tbody className="divide-y divide-zinc-800/50">
                   {filteredInstitutions.map((inst) => {
                     const percentage = totalIndicators > 0 ? Math.round((inst.assessmentsCount / totalIndicators) * 100) : 0
-                    
+
                     return (
                       <tr
                         key={inst.id}
@@ -208,14 +161,14 @@ export default function DashboardClient({
                         <td className="py-4 px-6 font-semibold text-white group-hover:text-blue-400 transition-colors">
                           {inst.name}
                         </td>
-                        
+
                         {/* Category */}
                         <td className="py-4 px-6">
                           <span className="px-2.5 py-0.5 bg-zinc-800 text-zinc-300 rounded-md text-xs font-semibold border border-zinc-700/30">
                             {inst.category}
                           </span>
                         </td>
-                        
+
                         {/* Progress */}
                         <td className="py-4 px-6">
                           <div className="space-y-1.5 max-w-xs">
