@@ -126,7 +126,7 @@ export default function DashboardClient({
       {/* ─────────────────────────────────────────────────────────────────────
           Main content — semua di sini scroll normal kecuali filter bar
       ──────────────────────────────────────────────────────────────────────── */}
-      <main className="relative z-0 max-w-7xl mx-auto px-6 pt-8 pb-12 space-y-6">
+      <main className="relative z-0 max-w-7xl mx-auto px-6 pt-8 pb-20 space-y-6">
 
         {/* ─────────────────────────────────────────────────────────────────
             2. HEADING — normal flow, TIDAK sticky.
@@ -257,62 +257,69 @@ export default function DashboardClient({
           )}
         </div>
 
-        {/* Pagination */}
+        {/* ─────────────────────────────────────────────────────────────────
+            5. PAGINATION — sticky bottom-0.
+            Selalu terlihat di bagian bawah viewport saat scroll.
+            z-5: di bawah top bar (z-20) dan filter (z-10).
+        ──────────────────────────────────────────────────────────────────── */}
         {totalCount > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-zinc-500 order-2 sm:order-1">
-              Menampilkan{' '}
-              <span className="text-zinc-300 font-semibold">{startItem}–{endItem}</span>{' '}
-              dari{' '}
-              <span className="text-zinc-300 font-semibold">{totalCount}</span>{' '}
-              instansi
-            </p>
+          <div className="fixed bottom-0 left-0 right-0 z-[5] px-6 py-3 bg-zinc-950 border-t border-zinc-800/80">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-zinc-500 order-2 sm:order-1">
+                Menampilkan{' '}
+                <span className="text-zinc-300 font-semibold">{startItem}–{endItem}</span>{' '}
+                dari{' '}
+                <span className="text-zinc-300 font-semibold">{totalCount}</span>{' '}
+                instansi
+              </p>
 
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1 order-1 sm:order-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Prev
-                </button>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1 order-1 sm:order-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Prev
+                  </button>
 
-                {pageNumbers.map((p, i) =>
-                  p === '...' ? (
-                    <span key={`ellipsis-${i}`} className="px-2 py-1.5 text-xs text-zinc-600">…</span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => handlePageChange(p as number)}
-                      className={`min-w-[32px] px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-all
-                        ${p === currentPage
-                          ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
-                          : 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'
-                        }`}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
+                  {pageNumbers.map((p, i) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${i}`} className="px-2 py-1.5 text-xs text-zinc-600">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p as number)}
+                        className={`min-w-[32px] px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-all
+                          ${p === currentPage
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                            : 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                          }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
 
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1"
-                >
-                  Next
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            )}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                  >
+                    Next
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
+
       </main>
     </div>
   )
