@@ -235,8 +235,14 @@ export default function AuditClient({
     ? `https://drive.google.com/drive/folders/${institution.drive_folder_id}`
     : '#'
 
-  // Export assessment data to CSV (compatible with Excel)
-  const exportToCSV = (type: 'hasil' | 'temuan') => {
+  // Export Hasil Audit via server-side template-based XLSX
+  const exportHasilAudit = () => {
+    const url = `/api/export-hasil-audit?institutionId=${encodeURIComponent(institution.id)}`
+    window.open(url, '_blank')
+  }
+
+  // Export Temuan Audit to CSV (compatible with Excel)
+  const exportTemuanCSV = () => {
     const csvRows = []
     
     // Header Row
@@ -256,7 +262,7 @@ export default function AuditClient({
         const notesVal = assessment?.notes || ''
 
         // For Temuan Audit report, filter only assessments with findings
-        if (type === 'temuan' && (statusVal === 'tidak_ada_temuan' || statusVal === 'belum_diisi')) {
+        if (statusVal === 'tidak_ada_temuan' || statusVal === 'belum_diisi') {
           return
         }
 
@@ -280,7 +286,7 @@ export default function AuditClient({
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `${type === 'hasil' ? 'Hasil_Audit' : 'Temuan_Audit'}_${institution.name.replace(/[^a-z0-9]/gi, '_')}.csv`)
+    link.setAttribute('download', `Temuan_Audit_${institution.name.replace(/[^a-z0-9]/gi, '_')}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -311,17 +317,17 @@ export default function AuditClient({
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => exportToCSV('hasil')}
+              onClick={exportHasilAudit}
               className="px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
-              title="Ekspor Hasil Audit ke Excel/CSV"
+              title="Ekspor Hasil Penilaian ke Excel (Template)"
             >
               <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>Export Hasil Audit</span>
+              <span>Export Hasil Penilaian</span>
             </button>
             <button
-              onClick={() => exportToCSV('temuan')}
+              onClick={exportTemuanCSV}
               className="px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
               title="Ekspor Temuan Audit ke Excel/CSV"
             >

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { RefreshCw } from 'lucide-react'
 
@@ -24,6 +24,12 @@ export default function SyncPage() {
   const [summary, setSummary] = useState<SyncSummary | null>(null)
   const [institutions, setInstitutions] = useState<Institution[]>([])
   const [stage, setStage] = useState<string>('')
+  const [mounted, setMounted] = useState(false)
+
+  // Defer date formatting to client-only to avoid SSR/client hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function handleSync() {
     setLoading(true)
@@ -187,7 +193,9 @@ export default function SyncPage() {
                       </td>
                       <td className="py-3 px-4 font-mono text-xs text-zinc-500">{inst.drive_folder_id}</td>
                       <td className="py-3 pl-4 text-right text-xs text-zinc-500">
-                        {new Date(inst.last_synced_at).toLocaleString('id-ID')}
+                        {mounted
+                          ? new Date(inst.last_synced_at).toLocaleString('id-ID')
+                          : '—'}
                       </td>
                     </tr>
                   ))}
