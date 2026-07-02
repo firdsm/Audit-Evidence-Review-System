@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import UserDropdown from '@/components/UserDropdown'
 
@@ -19,11 +19,6 @@ interface DashboardClientProps {
   userName?: string
   isSuperAdmin?: boolean
   allCategories: string[]
-  currentPage: number
-  totalPages: number
-  totalCount: number
-  initialSearch: string
-  initialCategory: string
 }
 
 // ── Pagination helper ──────────────────────────────────────────────────────
@@ -48,45 +43,43 @@ export default function DashboardClient({
   userName = '',
   isSuperAdmin = false,
   allCategories,
-  currentPage,
-  totalPages,
-  totalCount,
-  initialSearch,
-  initialCategory,
 }: DashboardClientProps) {
   const router = useRouter()
 
-  const [searchInput, setSearchInput] = useState(initialSearch)
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory)
-  const debounceRef = useRef<NodeJS.Timeout | null>(null)
+  const [searchInput, setSearchInput] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('ALL')
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const navigate = useCallback(
-    (search: string, category: string, page: number) => {
-      const params = new URLSearchParams()
-      if (search) params.set('search', search)
-      if (category && category !== 'ALL') params.set('category', category)
-      if (page > 1) params.set('page', String(page))
-      const qs = params.toString()
-      router.push(`/dashboard${qs ? `?${qs}` : ''}`)
-    },
-    [router]
-  )
+  // Filter institutions locally in memory
+  const filteredInstitutions = React.useMemo(() => {
+    return institutions.filter((inst) => {
+      const matchSearch = inst.name.toLowerCase().includes(searchInput.toLowerCase())
+      const matchCategory = selectedCategory === 'ALL' || inst.category === selectedCategory
+      return matchSearch && matchCategory
+    })
+  }, [institutions, searchInput, selectedCategory])
+
+  // Get current page's sliced items
+  const paginatedInstitutions = React.useMemo(() => {
+    const offset = (currentPage - 1) * 10
+    return filteredInstitutions.slice(offset, offset + 10)
+  }, [filteredInstitutions, currentPage])
+
+  const totalCount = filteredInstitutions.length
+  const totalPages = Math.max(1, Math.ceil(totalCount / 10))
 
   function handleSearchChange(value: string) {
     setSearchInput(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      navigate(value, selectedCategory, 1)
-    }, 400)
+    setCurrentPage(1)
   }
 
   function handleCategoryChange(value: string) {
     setSelectedCategory(value)
-    navigate(searchInput, value, 1)
+    setCurrentPage(1)
   }
 
   function handlePageChange(page: number) {
-    navigate(searchInput, selectedCategory, page)
+    setCurrentPage(page)
   }
 
   const startItem = totalCount === 0 ? 0 : (currentPage - 1) * 10 + 1
@@ -195,7 +188,7 @@ export default function DashboardClient({
             4. INSTITUTIONS TABLE — normal flow, scroll di bawah filter
         ──────────────────────────────────────────────────────────────────── */}
         <div className="bg-zinc-900/20 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-md">
-          {institutions.length === 0 ? (
+          {filteredInstitutions.length === 0 ? (
             <div className="p-12 text-center text-zinc-500 space-y-2">
               <svg className="w-12 h-12 mx-auto opacity-30 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -214,7 +207,7 @@ export default function DashboardClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/50">
-                  {institutions.map((inst) => {
+                  {paginatedInstitutions.map((inst) => {
                     const percentage = totalIndicators > 0
                       ? Math.round((inst.assessmentsCount / totalIndicators) * 100)
                       : 0
