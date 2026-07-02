@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { listFoldersInFolder } from '@/lib/google-drive'
 import { createClient } from '@/lib/supabase/server'
 import { requireSuperAdminApi } from '@/lib/auth'
+import { matchAspectFolder } from '@/lib/drive-utils'
 
 export async function POST() {
   try {
@@ -105,6 +106,19 @@ export async function POST() {
       .order('category')
       .order('name')
 
+    // Resolve and cache folder IDs for institutions in batches of 5
+    if (updatedList && updatedList.length > 0) {
+      console.log(`[Sync Resolve] Starting folder resolution for ${updatedList.length} institutions...`)
+      const resolveBatchSize = 5
+      for (let i = 0; i < updatedList.length; i += resolveBatchSize) {
+        const batch = updatedList.slice(i, i + resolveBatchSize)
+        await Promise.all(
+          batch.map((inst) => resolveInstitutionFolders(supabase, inst))
+        )
+      }
+      console.log(`[Sync Resolve] Completed folder resolution.`)
+    }
+
     return NextResponse.json({
       success: true,
       summary: {
@@ -123,5 +137,140 @@ export async function POST() {
       },
       { status: 500 }
     )
+  }
+}
+
+async function resolveInstitutionFolders(
+  supabase: any,
+  institution: { id: string; name: string; drive_folder_id: string | null }
+) {
+  try {
+    if (!institution.drive_folder_id) return
+
+    // a. Fetch all indicators and their aspect details & mapping
+    const { data: indicators, error: indError } = await supabase
+      .from('indicators')
+      .select(`
+        id,
+        aspect_id,
+        code,
+        aspects (
+          id,
+          order_number,
+          name
+        ),
+        indicator_folder_mapping (
+          folder_position
+        )
+      `)
+
+    if (indError || !indicators) {
+      console.error(`[Sync Resolve] Error fetching indicators:`, indError)
+      return
+    }
+
+    // Count indicators per aspect locally
+    const indicatorsByAspect: Record<string, typeof indicators> = {}
+    for (const ind of indicators) {
+      const aspectId = ind.aspect_id
+      if (!indicatorsByAspect[aspectId]) {
+        indicatorsByAspect[aspectId] = []
+      }
+      indicatorsByAspect[aspectId].push(ind)
+    }
+
+    // b. Fetch aspect folders from Drive
+    const aspectFolders = await listFoldersInFolder(institution.drive_folder_id)
+    const sortedAspectFolders = aspectFolders
+      .filter((f) => f.id && f.name)
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+    const upsertPayloads: Array<{
+      institution_id: string
+      indicator_id: string
+      drive_folder_id: string
+      last_resolved_at: string
+    }> = []
+
+    // Resolve aspects in parallel
+    const aspectIds = Object.keys(indicatorsByAspect)
+    await Promise.all(
+      aspectIds.map(async (aspectId) => {
+        const aspectIndicators = indicatorsByAspect[aspectId]
+        if (aspectIndicators.length === 0) return
+
+        const aspectObj = aspectIndicators[0].aspects as any
+        if (!aspectObj) return
+        const aspectOrderNumber = aspectObj.order_number
+
+        // c. Match aspect folder
+        const matchedAspect = matchAspectFolder(sortedAspectFolders, aspectOrderNumber)
+        if (!matchedAspect) {
+          console.warn(`[Sync Resolve] Aspect folder not found for aspect: ${aspectObj.name} in institution: ${institution.name}`)
+          return
+        }
+
+        const isSingleIndicator = aspectIndicators.length === 1
+
+        if (isSingleIndicator) {
+          // d. Sistem Antrian - single indicator aspect maps directly to aspect folder
+          const indicator = aspectIndicators[0]
+          upsertPayloads.push({
+            institution_id: institution.id,
+            indicator_id: indicator.id,
+            drive_folder_id: matchedAspect.id,
+            last_resolved_at: new Date().toISOString()
+          })
+        } else {
+          // e. Fetch indicator folders
+          try {
+            const indicatorFolders = await listFoldersInFolder(matchedAspect.id)
+            const sortedIndicatorFolders = indicatorFolders
+              .filter((f) => f.id && f.name)
+              .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+            for (const indicator of aspectIndicators) {
+              const mapping = indicator.indicator_folder_mapping as any
+              const folderPosition = mapping?.folder_position
+
+              if (folderPosition === undefined || folderPosition === null) {
+                // Skip if not mapped yet
+                continue
+              }
+
+              const index = folderPosition - 1
+              if (index >= 0 && index < sortedIndicatorFolders.length) {
+                const matchedFolder = sortedIndicatorFolders[index]
+                if (matchedFolder.id) {
+                  upsertPayloads.push({
+                    institution_id: institution.id,
+                    indicator_id: indicator.id,
+                    drive_folder_id: matchedFolder.id,
+                    last_resolved_at: new Date().toISOString()
+                  })
+                }
+              }
+            }
+          } catch (err: any) {
+            console.error(`[Sync Resolve] Error fetching indicator folders for aspect ${aspectObj.name} of ${institution.name}:`, err.message)
+          }
+        }
+      })
+    )
+
+    // f. Upsert resolved folder IDs
+    if (upsertPayloads.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('institution_indicator_folders')
+        .upsert(upsertPayloads, { onConflict: 'institution_id,indicator_id' })
+
+      if (upsertError) {
+        console.error(`[Sync Resolve] Error upserting indicator folders for ${institution.name}:`, upsertError.message)
+      } else {
+        console.log(`[Sync Resolve] Successfully resolved ${upsertPayloads.length} indicator folders for ${institution.name}`)
+      }
+    }
+  } catch (err: any) {
+    console.error(`[Sync Resolve] Failed to resolve folders for ${institution.name}:`, err.message)
   }
 }

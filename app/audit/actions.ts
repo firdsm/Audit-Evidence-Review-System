@@ -14,6 +14,9 @@ interface FlatFile {
   subfolderName?: string
 }
 
+import { DriveNotFoundError } from '@/lib/drive-errors'
+import { matchAspectFolder } from '@/lib/drive-utils'
+
 /**
  * Recursive helper to collect files from all subfolders up to maxFoldersToScan limit (safety limit)
  */
@@ -21,7 +24,8 @@ async function collectFilesRecursive(
   folderId: string,
   scanState: { count: number; limitReached: boolean },
   maxFoldersToScan: number = 3,
-  currentPath: string = ''
+  currentPath: string = '',
+  throwsOnError: boolean = false
 ): Promise<FlatFile[]> {
   if (scanState.count >= maxFoldersToScan) {
     scanState.limitReached = true
@@ -59,7 +63,7 @@ async function collectFilesRecursive(
     // the count limit is respected correctly across all parallel branches.
     const childScanPromises = sortedSubfolders.map((sub) => {
       const childPath = currentPath ? `${currentPath} > ${sub.name}` : sub.name || ''
-      return collectFilesRecursive(sub.id!, scanState, maxFoldersToScan, childPath)
+      return collectFilesRecursive(sub.id!, scanState, maxFoldersToScan, childPath, false)
     })
 
     const childFilesArray = await Promise.all(childScanPromises)
@@ -68,7 +72,16 @@ async function collectFilesRecursive(
     }
 
     return files
-  } catch (error) {
+  } catch (error: any) {
+    const isNotFoundError = error?.status === 404 || error?.code === 404 || 
+                            error?.status === 403 || error?.code === 403 ||
+                            error?.message?.toLowerCase().includes('not found') ||
+                            error?.message?.toLowerCase().includes('access');
+
+    if (throwsOnError && isNotFoundError) {
+      throw new DriveNotFoundError(`Folder with ID ${folderId} is not accessible or not found`)
+    }
+
     console.error(`Error in collectFilesRecursive for folder ${folderId}:`, error)
     return []
   }
@@ -105,7 +118,9 @@ export async function getEvidenceFilesAction(
       return { success: false, error: 'Folder ID instansi belum ditentukan' }
     }
 
-    // 0. Cache lookup
+    // ==========================================
+    // LAYER 1: In-Memory Cache
+    // ==========================================
     if (!forceRefresh) {
       const cached = evidenceCache.get(cacheKey)
       if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -117,27 +132,111 @@ export async function getEvidenceFilesAction(
 
     const supabase = await createClient()
 
-    // 1. Fetch active indicator and its aspect info
-    const { data: indicator, error: indError } = await supabase
-      .from('indicators')
-      .select(`
-        id,
-        aspect_id,
-        aspects (
-          order_number,
-          name
-        )
-      `)
-      .eq('code', indicatorCode)
-      .single()
+    // Parallelize metadata fetching (Institution ID & Indicator details)
+    const [instResult, indResult] = await Promise.all([
+      supabase
+        .from('institutions')
+        .select('id')
+        .eq('drive_folder_id', institutionFolderId)
+        .maybeSingle(),
+      supabase
+        .from('indicators')
+        .select(`
+          id,
+          aspect_id,
+          aspects (
+            order_number,
+            name
+          )
+        `)
+        .eq('code', indicatorCode)
+        .maybeSingle()
+    ])
 
-    if (indError || !indicator) {
+    if (instResult.error) {
+      throw new Error(`Gagal memuat data instansi: ${instResult.error.message}`)
+    }
+    if (indResult.error || !indResult.data) {
       return { success: false, error: `Indikator ${indicatorCode} tidak terdaftar` }
     }
 
+    const institution = instResult.data
+    const indicator = indResult.data
     const aspect = indicator.aspects as any
     const aspectOrderNumber = aspect?.order_number
     const aspectName = aspect?.name
+
+    // ==========================================
+    // LAYER 2: Database Folder ID Lookup
+    // ==========================================
+    if (institution && indicator) {
+      const { data: dbFolder, error: dbFolderError } = await supabase
+        .from('institution_indicator_folders')
+        .select('drive_folder_id')
+        .eq('institution_id', institution.id)
+        .eq('indicator_id', indicator.id)
+        .maybeSingle()
+
+      if (!dbFolderError && dbFolder?.drive_folder_id) {
+        try {
+          const scanState = { count: 0, limitReached: false }
+          // Scan directly using throwsOnError = true
+          const files = await collectFilesRecursive(dbFolder.drive_folder_id, scanState, 10, '', true)
+
+          const response = {
+            success: true,
+            files,
+            folderName: 'Google Drive Folder', // General name since we bypassed list query
+            folderExists: true,
+            scanLimitReached: scanState.limitReached,
+            debug: {
+              institutionFolderId,
+              aspectOrderNumber,
+              aspectName,
+              expectedIndicatorCount: 0,
+              isSingleIndicator: false,
+              matchedAspectFolderName: null,
+              matchedAspectFolderId: null,
+              allAspectFolders: [],
+              allIndicatorFolders: [],
+              indicatorCode,
+              mappedFolderPosition: null,
+              mappedIndex: null,
+              matchedFolderName: 'Direct Cache/DB Folder',
+              matchedFolderId: dbFolder.drive_folder_id,
+              folderSource: 'dbFolder (direct)',
+              scannedFoldersCount: scanState.count,
+              scanLimitReached: scanState.limitReached,
+              recursionFilesFound: files.length,
+            }
+          }
+          evidenceCache.set(cacheKey, { data: response, timestamp: Date.now() })
+          const elapsed = performance.now() - startTime
+          console.log(`[Evidence DB HIT] Key: ${cacheKey} fetched directly in ${elapsed.toFixed(2)}ms`)
+          return response
+        } catch (error) {
+          if (error instanceof DriveNotFoundError) {
+            console.warn(`[Stale Folder ID] institution_id: ${institution.id}, indicator_id: ${indicator.id}, folder_id: ${dbFolder.drive_folder_id} — falling back to traversal`)
+            
+            // Delete the stale database record
+            await supabase
+              .from('institution_indicator_folders')
+              .delete()
+              .eq('institution_id', institution.id)
+              .eq('indicator_id', indicator.id)
+
+            // Let it fall through to LAYER 3
+          } else {
+            throw error
+          }
+        }
+      }
+    }
+
+    // ==========================================
+    // LAYER 3: Traversal Penuh (Fallback / Logika Lama)
+    // ==========================================
+    console.log(`[Evidence DB MISS / Fallback] Key: ${cacheKey} — Performing full folder traversal`)
 
     // 2. Fetch all subfolders from the active institution's folder (level aspect folders)
     const aspectFolders = await listFoldersInFolder(institutionFolderId)
@@ -148,14 +247,7 @@ export async function getEvidenceFilesAction(
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
     // 3. Find the aspect folder: match by prefix number first, fallback to alphabetical order index
-    let matchedAspectFolder = sortedAspectFolders.find(f => {
-      const m = (f.name || '').match(/^(\d+)/)
-      return m ? parseInt(m[1], 10) === aspectOrderNumber : false
-    })
-
-    if (!matchedAspectFolder && aspectOrderNumber - 1 < sortedAspectFolders.length) {
-      matchedAspectFolder = sortedAspectFolders[aspectOrderNumber - 1]
-    }
+    const matchedAspectFolder = matchAspectFolder(sortedAspectFolders, aspectOrderNumber)
 
     // 4. Fetch indicators count for this aspect to check if it's a single-indicator aspect
     const { count: expectedIndicatorCount, error: countError } = await supabase
@@ -229,6 +321,21 @@ export async function getEvidenceFilesAction(
       debug.matchedFolderName = matchedAspectFolder.name || null
       debug.matchedFolderId = matchedAspectFolder.id || null
 
+      // Save resolved folder ID to database asynchronously
+      if (institution && indicator && matchedAspectFolder.id) {
+        supabase
+          .from('institution_indicator_folders')
+          .upsert({
+            institution_id: institution.id,
+            indicator_id: indicator.id,
+            drive_folder_id: matchedAspectFolder.id,
+            last_resolved_at: new Date().toISOString()
+          }, { onConflict: 'institution_id,indicator_id' })
+          .then(({ error: upsertError }) => {
+            if (upsertError) console.error('[Folder ID Auto-save Error]:', upsertError)
+          })
+      }
+
       const scanState = { count: 0, limitReached: false }
       const files = await collectFilesRecursive(matchedAspectFolder.id!, scanState, 10)
 
@@ -283,6 +390,21 @@ export async function getEvidenceFilesAction(
       if (matchedFolder.id) {
         debug.matchedFolderName = matchedFolder.name || null
         debug.matchedFolderId = matchedFolder.id || null
+
+        // Save resolved folder ID to database asynchronously
+        if (institution && indicator && matchedFolder.id) {
+          supabase
+            .from('institution_indicator_folders')
+            .upsert({
+              institution_id: institution.id,
+              indicator_id: indicator.id,
+              drive_folder_id: matchedFolder.id,
+              last_resolved_at: new Date().toISOString()
+            }, { onConflict: 'institution_id,indicator_id' })
+            .then(({ error: upsertError }) => {
+              if (upsertError) console.error('[Folder ID Auto-save Error]:', upsertError)
+            })
+        }
 
         const scanState = { count: 0, limitReached: false }
         const files = await collectFilesRecursive(matchedFolder.id, scanState, 10)
