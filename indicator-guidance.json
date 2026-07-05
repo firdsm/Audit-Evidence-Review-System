@@ -1,0 +1,1076 @@
+[
+    {
+        "indicator_code": "IND-01",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia Standar Pelayanan."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia SP namun tidak memenuhi 14 komponen."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia SP yang memenuhi 14 komponen."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia SP yang memenuhi 14 komponen dan dilakukan penetapan."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia SP yang memenuhi 14 komponen, melibatkan masyarakat dalam penyusunan SP, dan dilakukan penetapan."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia SP yang memenuhi 14 komponen, melibatkan masyarakat dalam penyusunan SP, dilakukan penetapan, dan dilakukan monev."
+            }
+        ],
+        "required_documents": [
+            "SK tentang SP ",
+            "Daftar jenis pelayanan",
+            "Laporan pelaksanaan penyusunan / peninjauan ulang SP. Terdiri dari berita acara, foto, notulensi, daftar hadir."
+        ]
+    },
+    {
+        "indicator_code": "IND-02",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Penyusunan SP tanpa melibatkan unsur masyarakat dan pihak terkait (stakeholder)."
+            },
+            {
+                "score": 1,
+                "description": "Penyusunan SP telah melibatkan minimal 1 unsur masyarakat."
+            },
+            {
+                "score": 2,
+                "description": "Penyusunan SP telah melibatkan minimal 2 unsur masyarakat."
+            },
+            {
+                "score": 3,
+                "description": "Penyusunan SP telah melibatkan minimal 3 unsur masyarakat."
+            },
+            {
+                "score": 4,
+                "description": "Penyusunan SP telah melibatkan minimal 4 unsur masyarakat."
+            },
+            {
+                "score": 5,
+                "description": "Penyusunan SP telah melibatkan lebih dari 4 unsur masyarakat."
+            }
+        ],
+        "required_documents": [
+            "Undangan pelaksanaan FKP",
+            "Berita Acara yang ditandangi oleh peserta kegiatan",
+            "Daftar Hadir",
+            "Notulensi",
+            "Foto kegiatan",
+            "Laporan FKP / Laporan "
+        ]
+    },
+    {
+        "indicator_code": "IND-03",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak ada publikasi SP."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia publikasi SP hanya sebagian dari komponen service delivery baik pada media cetak/non elektronik maupun media elektronik."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia publikasi SP seluruh komponen service delivery pada 2 atau lebih media publikasi namun belum dipublikasikan pada SIPP Nasional."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia publikasi SP seluruh komponen service delivery pada 2 media publikasi dan pada SIPP Nasional."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia publikasi SP seluruh komponen service delivery pada 3 media publikasi dan pada SIPP Nasional."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia publikasi SP seluruh komponen service delivery pada 4 atau lebih media publikasi dan pada SIPP Nasional."
+            }
+        ],
+        "required_documents": [
+            "Screenshot publikasi di Media Cetak / Non Elektronik (brosur, majalah, papan)",
+            "Screenshot publikasi di Media Elektronik (layar tv, monitor)",
+            "Screenshot publikasi di Media Sosial",
+            "Screenshot publikasi di Website",
+            "Screenshot publikasi di Aplikasi Instansi",
+            "Screenshot publikasi di SIPP Nasional"
+        ]
+    },
+    {
+        "indicator_code": "IND-04",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak dilaksanakan peninjauan ulang secara berkala terhadap Standar Pelayanan."
+            },
+            {
+                "score": 1,
+                "description": "Dilakukan peninjauan ulang 3 tahun atau lebih terhadap seluruh jenis layanan."
+            },
+            {
+                "score": 2,
+                "description": "Dilakukan peninjauan ulang 2 tahun sekali terhadap sebagian jenis layanan."
+            },
+            {
+                "score": 3,
+                "description": "Dilakukan peninjauan ulang 2 tahun sekali terhadap seluruh jenis layanan."
+            },
+            {
+                "score": 4,
+                "description": "Dilakukan peninjauan ulang 1 tahun sekali atau lebih cepat terhadap sebagian jenis layanan."
+            },
+            {
+                "score": 5,
+                "description": "Dilakukan peninjauan ulang 1 tahun sekali atau lebih cepat terhadap seluruh jenis layanan."
+            }
+        ],
+        "required_documents": [
+            "Berita Acara pelaksanaan FKP",
+            "Laporan FKP",
+            "Undangan FKP",
+            "Daftar Hadir",
+            "Dokumentasi kegiatan"
+        ]
+    },
+    {
+        "indicator_code": "IND-05",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia Maklumat Pelayanan"
+            },
+            {
+                "score": 1,
+                "description": "Tersedia Maklumat Pelayanan namun belum ditetapkan."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia Maklumat Pelayanan yang sudah ditetapkan namun isinya belum sesuai dengan peraturan perundangan yang berlaku."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia Maklumat Pelayanan yang sudah ditetapkan dan isinya telah sesuai dengan peraturan perundangan yang berlaku."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia Maklumat Pelayanan yang sudah ditetapkan, isinya telah sesuai dengan peraturan perundangan yang berlaku, dan dipublikasikan pada media non elektronik."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia Maklumat Pelayanan yang sudah ditetapkan, isinya telah sesuai dengan peraturan perundangan yang berlaku, dan dipublikasikan pada media non elektronik dan elektronik."
+            }
+        ],
+        "required_documents": [
+            "SK Maklumat Pelayanan",
+            "Foto/screenshot publikasi Maklumat Pelayanan pada media cetak, media eletronik dan media lainnya"
+        ]
+    },
+    {
+        "indicator_code": "IND-06",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Belum melaksanakan SKM."
+            },
+            {
+                "score": 1,
+                "description": "Sudah melaksanakan SKM namun tidak sesuai dengan PermenPANRB yang berlaku."
+            },
+            {
+                "score": 2,
+                "description": "Sudah melaksanakan SKM sesuai dengan PermenPANRB yang berlaku."
+            },
+            {
+                "score": 3,
+                "description": "Sudah melaksanakan SKM sesuai dengan PermenPANRB yang berlaku dan dipublikasikan pada media non-elektronik."
+            },
+            {
+                "score": 4,
+                "description": "Sudah melaksanakan SKM sesuai dengan PermenPANRB yang berlaku dan dipublikasikan pada media non-elektronik dan elektronik."
+            },
+            {
+                "score": 5,
+                "description": "Sudah melaksanakan SKM sesuai dengan PermenPANRB yang berlaku dan dipublikasikan pada media non-elektronik dan elektronik serta dilakukan tindak lanjut hasil SKM."
+            }
+        ],
+        "required_documents": [
+            "Publikasi SKM",
+            "Dokumen/foto pelaksanaan SKM dan media yang digunakan (Mesin SKM, Kuesioner manual)",
+            "Laporan Hasil Pelaksanaan SKM yang meliputi Laporan Rencana Tindak Lanjut dan Tindak Lanjut"
+        ]
+    },
+    {
+        "indicator_code": "IND-07",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak dipublikasikan."
+            },
+            {
+                "score": 1,
+                "description": "SKM dipublikasikan pada 1 (satu) media publikasi."
+            },
+            {
+                "score": 2,
+                "description": "SKM dipublikasikan pada 2 (dua) media publikasi."
+            },
+            {
+                "score": 3,
+                "description": "SKM dipublikasikan pada 3 (tiga) media publikasi."
+            },
+            {
+                "score": 4,
+                "description": "SKM dipublikasikan pada 4 (empat) media publikasi."
+            },
+            {
+                "score": 5,
+                "description": "SKM dipublikasikan pada lebih dari 4 (empat) media publikasi lainnya."
+            }
+        ],
+        "required_documents": [
+            "Screenshot publikasi di Media Cetak / Non Elektronik (brosur, majalah, papan)",
+            "Screenshot publikasi di Media Elektronik (layar tv, monitor)",
+            "Screenshot publikasi di Media Sosial",
+            "Screenshot publikasi di Website",
+            "Screenshot publikasi di Aplikasi Instansi",
+            "Screenshot publikasi di SIPP Nasional"
+        ]
+    },
+    {
+        "indicator_code": "IND-08",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak ada rencana tindak lanjut SKM."
+            },
+            {
+                "score": 1,
+                "description": "Ada rencana tindak lanjut tapi belum dilaksanakan."
+            },
+            {
+                "score": 2,
+                "description": "Tindak lanjut hasil SKM dilaksanakan kurang dari 30%, dibuktikan dengan laporan pelaksanaannya."
+            },
+            {
+                "score": 3,
+                "description": "Tindak lanjut hasil SKM dilaksanakan 30-80%, dibuktikan dengan laporan pelaksanaannya."
+            },
+            {
+                "score": 4,
+                "description": "Tindak lanjut hasil SKM dilaksanakan lebih dari 80%, dibuktikan dengan laporan pelaksanaannya."
+            },
+            {
+                "score": 5,
+                "description": "Tindak lanjut hasil SKM dilaksanakan 100%, dibuktikan dengan laporan pelaksanaannya."
+            }
+        ],
+        "required_documents": [
+            "Laporan SKM tahun sebelumnya yang memuat rencana tindak lanjut",
+            "Laporan Pelaksanaan Tindak Lanjut SKM"
+        ]
+    },
+    {
+        "indicator_code": "IND-09",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Rekomendasi hasil SKM tidak ditindaklanjuti."
+            },
+            {
+                "score": 1,
+                "description": "Rekomendasi hasil SKM ditindaklanjuti seluruhnya 1 tahun setelah laporan SKM diterbitkan."
+            },
+            {
+                "score": 2,
+                "description": "Rekomendasi hasil SKM ditindaklanjuti seluruhnya 9 bulan setelah laporan SKM diterbitkan."
+            },
+            {
+                "score": 3,
+                "description": "Rekomendasi hasil SKM ditindaklanjuti seluruhnya 6 bulan setelah laporan SKM diterbitkan."
+            },
+            {
+                "score": 4,
+                "description": "Rekomendasi hasil SKM ditindaklanjuti seluruhnya 3 bulan setelah laporan SKM diterbitkan. "
+            },
+            {
+                "score": 5,
+                "description": "Rekomendasi hasil SKM ditindaklanjuti seluruhnya 1 bulan setelah laporan SKM diterbitkan."
+            }
+        ],
+        "required_documents": [
+            "Laporan hasil pelaksanaan SKM pada 2 tahun terakhir yang memuat rencana tindak lanjut",
+            "Laporan Pelaksanaan Tindak Lanjut SKM"
+        ]
+    },
+    {
+        "indicator_code": "IND-10",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak memiliki kebijakan jam pelayanan/kerja."
+            },
+            {
+                "score": 1,
+                "description": "Memiliki kebijakan jam pelayanan/kerja."
+            },
+            {
+                "score": 2,
+                "description": "Memiliki kebijakan jam pelayanan/kerja dan 1 unsur lainnya."
+            },
+            {
+                "score": 3,
+                "description": "Memiliki kebijakan jam pelayanan/kerja dan 2 unsur lainnya."
+            },
+            {
+                "score": 4,
+                "description": "Memiliki kebijakan jam pelayanan/kerja dan 3 unsur lainnya."
+            },
+            {
+                "score": 5,
+                "description": "Memiliki kebijakan jam pelayanan/kerja dan 4 atau lebih unsur lainnya."
+            }
+        ],
+        "required_documents": [
+            "Uraian jam pelayanan",
+            "Surat perintah lembur (nota dinas/memo/dll) ",
+            "Surat Tugas pemberian pelayanan pada hari libur",
+            "Foto kegiatan",
+            "5. SK Jam Pelayanan"
+        ]
+    },
+    {
+        "indicator_code": "IND-11",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia aturan kode etik dan kode perilaku."
+            },
+            {
+                "score": 1,
+                "description": "Aturan kode etik dan kode perilaku Pelaksana Pelayanan hanya meliputi nilai dasar hak dan kewajiban."
+            },
+            {
+                "score": 2,
+                "description": "Aturan kode etik dan kode perilaku Pelaksana Pelayanan meliputi nilai dasar hak kewajiban dan 1 (satu) unsur lainnya."
+            },
+            {
+                "score": 3,
+                "description": "Aturan kode etik dan kode perilaku Pelaksan Pelayanan meliputi nilai dasar hak dan kewajiban dan 2 (dua) unsur lainnya."
+            },
+            {
+                "score": 4,
+                "description": "Aturan kode etik dan kode perilaku Pelaksana Pelayanan meliputi nilai dasar hak dan kewajiban dan 3 (tiga) unsur lainnya."
+            },
+            {
+                "score": 5,
+                "description": "Aturan kode etik dan kode perilaku Pelaksana Pelayanan meliputi nilai dasar hak dan kewajiban dan 4 (empat) unsur lainnya."
+            }
+        ],
+        "required_documents": [
+            "SK kode etik dan kode perilaku",
+            "Banner(opsional)"
+        ]
+    },
+    {
+        "indicator_code": "IND-12",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia mekanisme peningkatan motivasi kerja."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia 1 jenis mekanisme peningkatan motivasi kerja."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia 2 jenis mekanisme peningkatan motivasi kerja."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia 3 jenis mekanisme peningkatan motivasi kerja."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia 4 jenis mekanisme peningkatan motivasi kerja."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia lebih dari 4 jenis mekanisme peningkatan motivasi kerja."
+            }
+        ],
+        "required_documents": [
+            "SK mengenai mekanisme pemberian penghargaan",
+            "Sertifikat diklat",
+            "Surat rekom JF",
+            "Dokumentasi peningkatan kapasitas",
+            "Dokumentasi konseling pegawai",
+            "Dokumentasi program tim",
+            "Dan mekanisme lain yang dapat meningkatkan motivasi kerja"
+        ]
+    },
+    {
+        "indicator_code": "IND-13",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak ada pemberian penghargaan."
+            },
+            {
+                "score": 1,
+                "description": "Ada pemberian penghargaan hanya berdasarkan 1-2 unsur kecuali kinerja."
+            },
+            {
+                "score": 2,
+                "description": "Ada pemberian penghargaan berdasarkan 3-5 unsur kecuali kinerja."
+            },
+            {
+                "score": 3,
+                "description": "Ada pemberian penghargaan berdasarkan 1-2 unsur termasuk kinerja."
+            },
+            {
+                "score": 4,
+                "description": "Ada pemberian penghargaan berdasarkan 3-4 unsur termasuk kinerja."
+            },
+            {
+                "score": 5,
+                "description": "Ada pemberian penghargaan berdasarkan 5-6 unsur termasuk kinerja."
+            }
+        ],
+        "required_documents": [
+            "SK yang mengatur pemberian penghargaan"
+        ]
+    },
+    {
+        "indicator_code": "IND-14",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak menerapkan budaya layanan."
+            },
+            {
+                "score": 1,
+                "description": "Pelaksana pelayanan menerapkan 1 (satu) unsur budaya pelayanan."
+            },
+            {
+                "score": 2,
+                "description": "Pelaksana pelayanan menerapkan 2 (dua) unsur budaya pelayanan."
+            },
+            {
+                "score": 3,
+                "description": "Pelaksana pelayanan menerapkan 3 (tiga) unsur budaya pelayanan."
+            },
+            {
+                "score": 4,
+                "description": "Pelaksana pelayanan menerapkan 4 (empat) unsur budaya pelayanan."
+            },
+            {
+                "score": 5,
+                "description": "Pelaksana pelayanan menerapkan 5 (lima) unsur budaya pelayanan."
+            }
+        ],
+        "required_documents": [
+            "SK Budaya Pelayanan",
+            "Seragam",
+            "Identitas nama",
+            "PIN/atribut/logo unit pelayanan",
+            "Aturan penerapan 5S",
+            "Nilai-nilai budaya layanan bisa dalam bentuk slogan, motto, maskot, dan sebagainya."
+        ]
+    },
+    {
+        "indicator_code": "IND-15",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia tempat parkir."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia tempat parkir dan memiliki 1 fasilitas parkir."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia tempat parkir dan memiliki 2 fasilitas parkir."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia tempat parkir dan memiliki 3 fasilitas parkir."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia tempat parkir dan memiliki 4 fasilitas parkir."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia tempat parkir dan memiliki 5 atau lebih fasilitas parkir."
+            }
+        ],
+        "required_documents": [
+            "Ketersediaan parkir roda dua dan roda empat. ",
+            "Petugas parkir. ",
+            "Pemeriksaan karcis/kartu ",
+            "CCTV ",
+            "Penitipan jaket/helm. ",
+            "Pelindung (Kanopi/atap bahan lain). ",
+            "Drive Thru dan/atau fasilitas tambahan"
+        ]
+    },
+    {
+        "indicator_code": "IND-16",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia fasilitas apapun."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia fasilitas wajib."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia fasilitas wajib dan 1 fasilitas pelengkap."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia fasilitas wajib dan 2 fasilitas pelengkap."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia fasilitas wajib dan 3 fasilitas pelengkap."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia fasilitas wajib dan 4 atau lebih fasilitas pelengkap."
+            }
+        ],
+        "required_documents": [
+            "Fasilitas wajib: Kursi tunggu dan pendingin/sirkulasi ruangan",
+            "Mesin antrian ",
+            "Televisi",
+            "Bahan bacaan",
+            "Charger booth",
+            "Hotspot/wifi",
+            "Air minum",
+            "Hal-hal lainnya yang mendukung kenyamanan ruang"
+        ]
+    },
+    {
+        "indicator_code": "IND-17",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia toilet pengguna layanan."
+            },
+            {
+                "score": 1,
+                "description": "Toilet pengguna layanan dengan 1 kondisi."
+            },
+            {
+                "score": 2,
+                "description": "Toilet pengguna layanan dengan 2 kondisi."
+            },
+            {
+                "score": 3,
+                "description": "Toilet pengguna layanan dengan 3 kondisi."
+            },
+            {
+                "score": 4,
+                "description": "Toilet pengguna layanan dengan 4 kondisi."
+            },
+            {
+                "score": 5,
+                "description": "Toilet pengguna layanan dengan lebih dari 4 kondisi."
+            }
+        ],
+        "required_documents": [
+            "Ketersediaan toilet pria dan wanita",
+            "Wastafel",
+            "Toiletries: tissue, sabun, tempat sampah, dll",
+            "Air bersih. Monev intensitas petugas membersihkan toilet.",
+            "Fasilitas lain yang mendukung"
+        ]
+    },
+    {
+        "indicator_code": "IND-18",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia sarana prasarana bagi pengguna layanan kelompok rentan."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia 1-3 sarana prasarana bagi pengguna layanan kelompok rentan."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia 4-6 sarana prasarana bagi pengguna layanan kelompok rentan."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia 7-9 sarana prasarana bagi pengguna layanan kelompok rentan."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia 10-12 sarana prasarana bagi pengguna layanan kelompok rentan."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia 13 atau lebih sarana prasarana bagi pengguna layanan kelompok rentan."
+            }
+        ],
+        "required_documents": [
+            "Kursi roda/tongkat/kruk",
+            "Pintu masuk yang mudah diakses",
+            "Step lobby/ramp/jalan",
+            "Lift khusus",
+            "Selasar",
+            "Toilet khusus. ",
+            "Loket khusus",
+            "Ruang tunggu khusus",
+            "Guiding block",
+            "Parkir khusus yang mudah diakses. ",
+            "Alat bantu tuna netra/tuna rungu",
+            "Arena bermain anak",
+            "Fasilitas lain sebagai pendukung layanan bagi kelompok rentan (petugas pemandu)."
+        ]
+    },
+    {
+        "indicator_code": "IND-19",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia fasilitas penunjang."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia 1 fasilitas penunjang."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia 2 fasilitas penunjang."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia 3 fasilitas penunjang."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia 4 fasilitas penunjang."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia 5 atau lebih fasilitas penunjang."
+            }
+        ],
+        "required_documents": [
+            "Fotocopy/ATK",
+            "P3K",
+            "APAR",
+            "Kantin ",
+            "Ruang Ibadah",
+            "Area merokok di luar ruang pelayanan ",
+            "Jalur evakuasi/titik kumpul ",
+            "Tempat Sampah ",
+            "CCTV"
+        ]
+    },
+    {
+        "indicator_code": "IND-20",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia sarana FO informasi layanan."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia sarana FO informasi layanan dengan 1 fasilitas."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia sarana FO informasi layanan dengan 2 fasilitas."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia sarana FO informasi layanan dengan 3 fasilitas."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia sarana FO informasi layanan dengan 4 fasilitas."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia sarana FO informasi layanan dengan 5 atau lebih fasilitas."
+            }
+        ],
+        "required_documents": [
+            "Petugas khusus ",
+            "Meja/kursi ",
+            "Layar/display ",
+            "Bahan cetak informasi layanan. ",
+            "Register tamu (manual/elektronik)."
+        ]
+    },
+    {
+        "indicator_code": "IND-21",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia sistem informasi pelayanan publik baik elektronik maupun non elektronik."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia sistem informasi pelayanan publik non elektronik melalui media lisan (pusat informasi)."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia sistem informasi pelayanan publik non elektronik melalui media lisan (pusat informasi) serta media papan pengumuman dan media cetak."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia Sistem informasi pelayanan publik elektronik namun belum online (e-kiosk/ display TV/ layar monitor)."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia Sistem informasi pelayanan publik berbasis online/website."
+            },
+            {
+                "score": 5,
+                "description": "Sistem informasi pelayanan publik telah online/website dan terhubung dengan sistem informasi pelayanan publik nasional serta telah menginput layanan yang ditetapkan ke dalam sistem informasi pelayanan publik nasional."
+            }
+        ],
+        "required_documents": [
+            "Akun pengguna pada SIPPN",
+            "Screenshot tampilan dari unsur pendukung SIPP yang menampilkan jumlah layanan yang diinput"
+        ]
+    },
+    {
+        "indicator_code": "IND-22",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia sistem informasi pendukung operasional pelayanan publik."
+            },
+            {
+                "score": 1,
+                "description": "Tersedia sistem informasi pendukung operasional pelayanan dengan 1 kondisi."
+            },
+            {
+                "score": 2,
+                "description": "Tersedia sistem informasi pendukung operasional pelayanan dengan 2 kondisi."
+            },
+            {
+                "score": 3,
+                "description": "Tersedia sistem informasi pendukung operasional pelayanan dengan 3 kondisi."
+            },
+            {
+                "score": 4,
+                "description": "Tersedia sistem informasi pendukung operasional pelayanan dengan 4 kondisi."
+            },
+            {
+                "score": 5,
+                "description": "Tersedia sistem informasi pendukung operasional pelayanan dengan lebih dari 4 kondisi."
+            }
+        ],
+        "required_documents": [
+            "Layanan Pengelolaan Pengaduan SP4N-LAPOR,",
+            "Survey Kepuasan Masyarakat,",
+            "SDM: Aplikasi atau website pengelola kepegawaian,",
+            "FAQ,",
+            "Pengelolaan keuangan pelayanan publik bagi layanan berbayar,",
+            "Atau unsur pendukung lainnya"
+        ]
+    },
+    {
+        "indicator_code": "IND-23",
+        "scale": [
+            {
+                "score": 0,
+                "description": "SIPP Elektronik tidak terhubung secara daring."
+            },
+            {
+                "score": 1,
+                "description": "SIPP Elektronik berbasis website/aplikasi mudah dioperasikan."
+            },
+            {
+                "score": 2,
+                "description": "SIPP Elektronik berbasis website/aplikasi mudah dioperasikan, mudah diakses."
+            },
+            {
+                "score": 3,
+                "description": "SIPP Elektronik berbasis website/aplikasi mudah dioperasikan, mudah diakses, navigasi yang mudah dipahami."
+            },
+            {
+                "score": 4,
+                "description": "SIPP Elektronik berbasis website/aplikasi yang mudah dioperasikan mudah diakses, navigasi yang mudah dipahami, merupakan kanal digital resmi pemerintah (domain.go.id)."
+            },
+            {
+                "score": 5,
+                "description": "SIPP Elektronik berbasis website/aplikasi yang mudah dioperasikan, mudah diakses, navigasi yang mudah dipahami, merupakan kanal digital resmi pemerintah (domain.go.id) dan kompatibel."
+            }
+        ],
+        "required_documents": [
+            "Foto/screenshot website SIPP",
+            "Screenshot tampilan back-end dari kanal digital yang dikelola langsung oleh unit pelayanan"
+        ]
+    },
+    {
+        "indicator_code": "IND-24",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tersedia data dan informasi pelayanan publik yang tidak dimutakhirkan."
+            },
+            {
+                "score": 1,
+                "description": "Pemutakhiran data dan informasi pelayanan publik telah dilakukan secara tahunan."
+            },
+            {
+                "score": 2,
+                "description": "Pemutakhiran data dan informasi pelayanan publik telah dilakukan secara semesteran."
+            },
+            {
+                "score": 3,
+                "description": "Pemutakhiran data dan informasi pelayanan publik secara bulanan."
+            },
+            {
+                "score": 4,
+                "description": "Pemutakhiran data dan informasi pelayanan publik dilakukan secara mingguan."
+            },
+            {
+                "score": 5,
+                "description": "Pemutakhiran data dan informasi pelayanan publik dilakukan secara harian dan detail/sangat lengkap."
+            }
+        ],
+        "required_documents": [
+            "Foto atau screenshot paling tidak 5 informasi pelayanan yang dipublikasikan secara berturut-turut (foto menunjukkan waktu publikasi)"
+        ]
+    },
+    {
+        "indicator_code": "IND-25",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia Sarana konsultasi pengaduan pengguna layanan."
+            },
+            {
+                "score": 1,
+                "description": "Sarana konsultasi pengaduan pengguna layanan dengan 1 fasilitas."
+            },
+            {
+                "score": 2,
+                "description": "Sarana konsultasi pengaduan pengguna layanan dengan 2 fasilitas."
+            },
+            {
+                "score": 3,
+                "description": "Sarana konsultasi pengaduan pengguna layanan dengan 3 fasilitas."
+            },
+            {
+                "score": 4,
+                "description": "Sarana konsultasi pengaduan pengguna layanan dengan 4 fasilitas."
+            },
+            {
+                "score": 5,
+                "description": "Sarana konsultasi pengaduan pengguna layanan dengan 5 atau lebih fasilitas."
+            }
+        ],
+        "required_documents": [
+            "SK Petugas Pengaduan",
+            "Foto Kondisi Sarana Pengaduan: Kotak saran/pengaduan; Ruang khusus; Petugas khusus; Air minum/makanan ringan; Register Konsultasi dan Pengaduan; Publikasi informasi terkait mekanisme konsultasi dan pengaduan (poster/spanduk/leaflet/buku/dokumen/bahan cetak lain)"
+        ]
+    },
+    {
+        "indicator_code": "IND-26",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak ada sarana dan petugas."
+            },
+            {
+                "score": 1,
+                "description": "Hanya terdapat media konsultasi dan pengaduan secara offline menyatu dengan front office."
+            },
+            {
+                "score": 2,
+                "description": "Hanya terdapat media konsultasi dan pengaduan secara offline namun terpisah dengan front office."
+            },
+            {
+                "score": 3,
+                "description": "Terdapat media konsultasi dan pengaduan secara offline menyatu satu dengan front office dan tersedia secara online."
+            },
+            {
+                "score": 4,
+                "description": "Terdapat media konsultasi dan pengaduan secara offline secara terpisah dari front office, serta tersedia secara online."
+            },
+            {
+                "score": 5,
+                "description": "Terdapat media konsultasi dan pengaduan secara offline terpisah dari front office, dan terhubung dengan SP4N-LAPOR!"
+            }
+        ],
+        "required_documents": [
+            "Foto sarana/media  konsultasi dan pengaduan yang tersedia ",
+            "Data SP4N-LAPOR",
+            "SK Pengaduan"
+        ]
+    },
+    {
+        "indicator_code": "IND-27",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak ada dokumentasi."
+            },
+            {
+                "score": 1,
+                "description": "Terdapat dokumentasi yang diarsipkan."
+            },
+            {
+                "score": 2,
+                "description": "Terdapat dokumentasi yang diarsipkan dan dituangkan dalam laporan."
+            },
+            {
+                "score": 3,
+                "description": "Terdapat dokumentasi diarsipkan, dituangkan dalam laporan, dan dilakukan monev."
+            },
+            {
+                "score": 4,
+                "description": "Terdapat dokumentasi diarsipkan, dituangkan dalam laporan, dilakukan monev, dan ditindaklanjuti."
+            },
+            {
+                "score": 5,
+                "description": "Terdapat dokumentasi diarsipkan, dituangkan dalam laporan, dilakukan monev, ditindaklanjuti, dan dipublikasikan."
+            }
+        ],
+        "required_documents": [
+            "Dokumen konsultasi dan pengaduan",
+            "Screenshot dokumentasi pada website, aplikasi mobile, dan SP4NLAPOR!",
+            "Laporan berkala"
+        ]
+    },
+    {
+        "indicator_code": "IND-28",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak ada konsultasi atau pengaduan yang ditindaklanjuti."
+            },
+            {
+                "score": 1,
+                "description": "< 50% konsultasi atau pengaduan ditindaklanjuti hingga selesai yang tidak menggunakan SP4N-LAPOR!."
+            },
+            {
+                "score": 2,
+                "description": "≥ 50% konsultasi atau pengaduan ditindaklanjuti hingga selesai yang tidak menggunakan SP4N-LAPOR!."
+            },
+            {
+                "score": 3,
+                "description": "< 50% konsultasi atau pengaduan yang masuk ke SP4N-LAPOR! dan ditindaklanjuti hingga selesai."
+            },
+            {
+                "score": 4,
+                "description": "≥ 50% - 90% konsultasi atau pengaduan yang masuk ke SP4N-LAPOR! dan ditindaklanjuti hingga selesai."
+            },
+            {
+                "score": 5,
+                "description": "≥ 90% konsultasi atau pengaduan yang masuk ke SP4N-LAPOR! dan ditindaklanjuti hingga selesai."
+            }
+        ],
+        "required_documents": [
+            "Dokumen konsultasi dan pengaduan",
+            "Dokumen tindak lanjut pengaduan",
+            "Screenshot tampilan pada SP4NLAPOR! yang menunjukkan jumlah konsultasi dan pengaduan yang masuk dan yang telah ditindaklanjuti "
+        ]
+    },
+    {
+        "indicator_code": "IND-29",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Tidak tersedia inovasi."
+            },
+            {
+                "score": 1,
+                "description": "Belum ada inovasi, masih dalam proses pembelajaran berinovasi."
+            },
+            {
+                "score": 2,
+                "description": "Sudah ada inovasi namun kurang dari 1 tahun."
+            },
+            {
+                "score": 3,
+                "description": "Sudah ada inovasi lebih dari 1 tahun namun belum diikutsertakan dalam kompetisi (level apapun)."
+            },
+            {
+                "score": 4,
+                "description": "Sudah ada inovasi lebih dari 1 tahun dan sudah diikutsertakan dalam kompetisi level apapun."
+            },
+            {
+                "score": 5,
+                "description": "Inovasi yang dilaksanakan sudah mendapatkan prestasi pada level (apapun)."
+            }
+        ],
+        "required_documents": [
+            "Proposal Inovasi",
+            "Dokumen studi tiru",
+            "Dokumentasi pelaksanaan Inovasi (foto, daftar hadir dll)",
+            "Bukti Keikutsertaan dan atau piagam penghargaan yang diperoleh dalam kompetisi",
+            "Dokumentasi pelaksanaan",
+            "Regulasi Penetapan dan pelaksanaan inovasi"
+        ]
+    },
+    {
+        "indicator_code": "IND-30",
+        "scale": [
+            {
+                "score": 0,
+                "description": "Belum ada sumber daya yang mendukung keberlanjutan inovasi."
+            },
+            {
+                "score": 1,
+                "description": "Sumber daya yang mendukung keberlanjutan inovasi dalam bentuk rancangan payung hukum."
+            },
+            {
+                "score": 2,
+                "description": "Sumber daya yang mendukung keberlanjutan inovasi dalam bentuk payung hukum."
+            },
+            {
+                "score": 3,
+                "description": "Sumber daya yang mendukung keberlanjutan inovasi dalam bentuk payung hukum dan 1 kondisi lainnya."
+            },
+            {
+                "score": 4,
+                "description": "Sumber daya yang mendukung keberlanjutan inovasi dalam bentuk payung hukum dan 2 kondisi lainnya. "
+            },
+            {
+                "score": 5,
+                "description": "Sumber daya yang mendukung keberlanjutan inovasi dalam bentuk payung hukum dan 3 kondisi lainnya."
+            }
+        ],
+        "required_documents": [
+            "SK Inovasi",
+            "Foto/ SC DPA",
+            "Foto sarpras yang mendukung inovasi",
+            "SK TIM Inovasi",
+            "Dokumen kerjassama dengan pihak lain"
+        ]
+    },
+    {
+        "indicator_code": "IND-31",
+        "scale": [],
+        "required_documents": [
+            "Foto/ dokumentasi sistem antrian (manual/ sistem)",
+            "Screenshot website, aplikasi atau WA sistem antrian online"
+        ]
+    }
+]

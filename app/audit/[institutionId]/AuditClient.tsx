@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronUp, FolderOpen, Info, FileText, Files } from 'lucide-react'
 import { getEvidenceFilesAction, saveAssessmentAction } from '../actions'
 
 interface Indicator {
@@ -11,6 +11,8 @@ interface Indicator {
   code: string
   name: string
   order_number: number
+  scoring_scale?: Array<{ score: number; description: string }> | null
+  required_documents?: string[] | null
 }
 
 interface Aspect {
@@ -92,6 +94,23 @@ export default function AuditClient({
   // Debug states
   const [debugInfo, setDebugInfo] = useState<any>(null)
   const [showDebug, setShowDebug] = useState<boolean>(false)
+  const [showGuidance, setShowGuidance] = useState<boolean>(false)
+  const [showDocsPopover, setShowDocsPopover] = useState<boolean>(false)
+  const popoverRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setShowDocsPopover(false)
+      }
+    }
+    if (showDocsPopover) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showDocsPopover])
 
   // Debounce ref
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -140,6 +159,8 @@ export default function AuditClient({
     setFindingStatus(saved ? saved.finding_status : 'tidak_ada_temuan')
     setNotes(saved ? saved.notes : '')
     setSaveStatus('idle')
+    setShowGuidance(false)
+    setShowDocsPopover(false)
   }, [activeIndicator])
 
   // 1b. Fetch evidence files on indicator switch
@@ -751,9 +772,40 @@ export default function AuditClient({
             <>
               {/* Active Indicator Title */}
               <div className="space-y-1">
-                <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-md text-[10px] font-extrabold uppercase border border-blue-500/20">
-                  {activeIndicator.code}
-                </span>
+                <div className="flex items-center justify-between relative">
+                  <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-md text-[10px] font-extrabold uppercase border border-blue-500/20">
+                    {activeIndicator.code}
+                  </span>
+                  {activeIndicator?.required_documents && activeIndicator.required_documents.length > 0 && (
+                    <div className="relative inline-block" ref={popoverRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowDocsPopover(!showDocsPopover)}
+                        className="bg-transparent border border-zinc-800 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 px-2 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors leading-none"
+                        aria-label="Lihat dokumen yang perlu dilampirkan"
+                      >
+                        <Files size={12} aria-hidden="true" />
+                        <span>List Dokumen</span>
+                      </button>
+                      
+                      {showDocsPopover && (
+                        <div className="absolute right-0 mt-2 z-50 w-[260px] p-[14px] rounded-[12px] bg-zinc-900 border border-zinc-800 shadow-2xl space-y-3">
+                          <h4 className="text-[13px] font-medium text-white m-0">
+                            Dokumen yang perlu dilampirkan
+                          </h4>
+                          <ul className="space-y-2 m-0 p-0 list-none">
+                            {activeIndicator.required_documents.map((doc, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-xs text-zinc-300 leading-[1.5]">
+                                <FileText size={14} className="text-zinc-500 shrink-0 mt-0.5" />
+                                <span>{doc}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <h3 className="text-lg font-bold text-white tracking-tight pt-1 leading-tight">
                   {activeIndicator.name}
                 </h3>
@@ -761,35 +813,69 @@ export default function AuditClient({
 
               {/* Form Input fields */}
               <div className="space-y-5">
-                
-                {/* 1. Score Rating (0-5) */}
+                                {/* 1. Score Rating (0-5) */}
                 {!isSistemAntrian && (
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                      Nilai Kepatuhan (Skor 0-5)
-                    </label>
-                    <div className="grid grid-cols-6 gap-1.5">
-                      {[0, 1, 2, 3, 4, 5].map((val) => {
-                        const selected = score === val
-                        return (
-                          <button
-                            key={val}
-                            type="button"
-                            onClick={() => handleScoreChange(val)}
-                            className={`py-2 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
-                              selected
-                                ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/15'
-                                : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
-                            }`}
-                          >
-                            {val}
-                          </button>
-                        )
-                      })}
+                    <div className="flex items-center gap-[6px] mb-[10px] relative">
+                      <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 m-0">
+                        Nilai kepatuhan
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-col gap-[6px]">
+                      {(() => {
+                        const scales = activeIndicator?.scoring_scale && activeIndicator.scoring_scale.length > 0
+                          ? activeIndicator.scoring_scale
+                          : [0, 1, 2, 3, 4, 5].map(v => ({ score: v, description: `Skor ${v}` }));
+
+                        return scales.map((item) => {
+                          const selected = score === item.score;
+                          
+                          // Style variables based on score
+                          let rowClass = "bg-zinc-950 border-[0.5px] border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200";
+                          let badgeClass = "bg-zinc-900 border-[0.5px] border-zinc-800 text-zinc-400";
+                          let textClass = "text-zinc-500 font-normal";
+
+                          if (selected) {
+                            if (item.score === 0) {
+                              rowClass = "bg-zinc-900 border-[1.5px] border-zinc-400 text-zinc-200";
+                              badgeClass = "bg-zinc-800 border-[0.5px] border-zinc-600 text-zinc-200";
+                              textClass = "text-zinc-300 font-medium";
+                            } else if (item.score === 1 || item.score === 2) {
+                              rowClass = "bg-amber-500/5 border-[1.5px] border-amber-500/40 text-amber-400";
+                              badgeClass = "bg-amber-500/10 border border-amber-500/30 text-amber-400";
+                              textClass = "text-amber-400 font-medium";
+                            } else if (item.score === 3 || item.score === 4) {
+                              rowClass = "bg-emerald-500/5 border-[1.5px] border-emerald-500/40 text-emerald-400";
+                              badgeClass = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+                              textClass = "text-emerald-400 font-medium";
+                            } else if (item.score === 5) {
+                              rowClass = "bg-blue-500/5 border-[1.5px] border-blue-500/40 text-blue-400";
+                              badgeClass = "bg-blue-500/10 border border-blue-500/30 text-blue-400";
+                              textClass = "text-blue-400 font-medium";
+                            }
+                          }
+
+                          return (
+                            <button
+                              key={item.score}
+                              type="button"
+                              onClick={() => handleScoreChange(item.score)}
+                              className={`flex items-center gap-[10px] p-[8px_10px] rounded-xl border transition-all text-left cursor-pointer ${rowClass}`}
+                            >
+                              <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-[13px] font-medium ${badgeClass}`}>
+                                {item.score}
+                              </div>
+                              <p className={`text-xs leading-[1.4] m-0 ${textClass}`}>
+                                {item.description}
+                              </p>
+                            </button>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 )}
-
                 {/* 2. Finding Status (Dropdown) */}
                 <div className="space-y-2">
                   <label htmlFor="finding-status" className="text-xs font-bold uppercase tracking-wider text-zinc-400">

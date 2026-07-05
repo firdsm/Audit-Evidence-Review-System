@@ -46,7 +46,9 @@ export default async function AuditPage({ params }: PageProps) {
         aspect_id,
         code,
         name,
-        order_number
+        order_number,
+        scoring_scale,
+        required_documents
       )
     `)
     .order('order_number')
