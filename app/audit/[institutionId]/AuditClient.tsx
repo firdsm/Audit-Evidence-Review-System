@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { RefreshCw, ChevronDown, ChevronUp, FolderOpen, Info, FileText, Files } from 'lucide-react'
 import { getEvidenceFilesAction, saveAssessmentAction } from '../actions'
+import FullscreenButton from '@/components/FullscreenButton'
 
 interface Indicator {
   id: string
@@ -345,6 +346,7 @@ export default function AuditClient({
         {/* Global Save Indicator and Export Buttons */}
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
+            <FullscreenButton />
             <button
               onClick={exportHasilAudit}
               className="px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"

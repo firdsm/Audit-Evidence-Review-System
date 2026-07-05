@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import UserDropdown from '@/components/UserDropdown'
+import FullscreenButton from '@/components/FullscreenButton'
 
 interface InstitutionData {
   id: string
@@ -112,7 +113,10 @@ export default function DashboardClient({
               </span>
             </div>
           </div>
-          <UserDropdown userName={userName} userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
+          <div className="flex items-center gap-3">
+            <FullscreenButton />
+            <UserDropdown userName={userName} userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
+          </div>
         </div>
       </nav>
 
