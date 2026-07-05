@@ -84,6 +84,7 @@ export default function AuditClient({
 
   // Folder exists state for active indicator
   const [folderExists, setFolderExists] = useState<boolean>(true)
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null)
 
   // Status message for empty folder / no mapping fallback
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
@@ -124,6 +125,7 @@ export default function AuditClient({
     setActiveFile(null)
     setFilesError(null)
     setFolderExists(true)
+    setActiveFolderId(null)
     setStatusMessage(null)
     setDebugInfo(null)
     setScanLimitReached(false)
@@ -137,6 +139,12 @@ export default function AuditClient({
         setFiles(res.files || [])
         setDebugInfo(res.debug || null)
         setScanLimitReached(!!res.scanLimitReached)
+        
+        // Save the active folder ID
+        const resolvedFolderId = (res as any).driveFolderId || res.debug?.matchedFolderId
+        if (resolvedFolderId) {
+          setActiveFolderId(resolvedFolderId)
+        }
         
         // DO NOT set activeFile automatically!
         setActiveFile(null)
@@ -447,6 +455,18 @@ export default function AuditClient({
                   <RefreshCw size={16} className={filesLoading ? 'animate-spin' : ''} />
                 </button>
               )}
+              <button
+                onClick={() => {
+                  if (activeFolderId) {
+                    window.open(`https://drive.google.com/drive/folders/${activeFolderId}`, '_blank', 'noopener,noreferrer')
+                  }
+                }}
+                disabled={filesLoading || !activeFolderId}
+                className="p-1 text-zinc-400 hover:text-white disabled:opacity-50 transition-colors cursor-pointer"
+                title={activeFolderId ? "Buka folder Google Drive indikator" : "Folder Google Drive tidak tersedia untuk indikator ini"}
+              >
+                <FolderOpen size={16} />
+              </button>
               {debugInfo && (
                 <button
                   onClick={() => setShowDebug(!showDebug)}

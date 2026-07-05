@@ -189,6 +189,7 @@ export async function getEvidenceFilesAction(
             folderName: 'Google Drive Folder', // General name since we bypassed list query
             folderExists: true,
             scanLimitReached: scanState.limitReached,
+            driveFolderId: dbFolder.drive_folder_id,
             debug: {
               institutionFolderId,
               aspectOrderNumber,
@@ -349,6 +350,7 @@ export async function getEvidenceFilesAction(
         folderName: matchedAspectFolder.name,
         folderExists: true,
         scanLimitReached: scanState.limitReached,
+        driveFolderId: matchedAspectFolder.id || undefined,
         debug,
       }
       evidenceCache.set(cacheKey, { data: response, timestamp: Date.now() })
@@ -419,6 +421,7 @@ export async function getEvidenceFilesAction(
           folderName: matchedFolder.name,
           folderExists: true,
           scanLimitReached: scanState.limitReached,
+          driveFolderId: matchedFolder.id || undefined,
           debug,
         }
         evidenceCache.set(cacheKey, { data: response, timestamp: Date.now() })
