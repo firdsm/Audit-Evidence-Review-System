@@ -789,14 +789,14 @@ export default function AuditClient({
                       </button>
                       
                       {showDocsPopover && (
-                        <div className="absolute right-0 mt-2 z-50 w-[260px] p-[14px] rounded-[12px] bg-zinc-900 border border-zinc-800 shadow-2xl space-y-3">
-                          <h4 className="text-[13px] font-medium text-white m-0">
+                        <div className="absolute right-0 mt-2 z-50 w-[260px] p-3 rounded-[12px] bg-zinc-900 border border-zinc-800 shadow-2xl flex flex-col">
+                          <h4 className="text-[12px] font-semibold text-zinc-400 m-0 pb-[10px] mb-[10px] border-b-[0.5px] border-zinc-800/60 leading-none">
                             Dokumen yang perlu dilampirkan
                           </h4>
-                          <ul className="space-y-2 m-0 p-0 list-none">
+                          <ul className="space-y-[6px] m-0 p-0 list-none max-h-[320px] overflow-y-auto thin-scrollbar">
                             {activeIndicator.required_documents.map((doc, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-xs text-zinc-300 leading-[1.5]">
-                                <FileText size={14} className="text-zinc-500 shrink-0 mt-0.5" />
+                              <li key={idx} className="flex items-start gap-2 text-[12px] text-zinc-300 leading-[1.5] p-0">
+                                <FileText size={13} className="text-zinc-500 shrink-0 mt-[1px]" />
                                 <span>{doc}</span>
                               </li>
                             ))}
