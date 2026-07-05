@@ -3,11 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { logout } from '@/app/login/actions'
+import { updateGlobalDebugMode } from '@/app/settings_actions'
 
 interface UserDropdownProps {
   userName: string
   userEmail: string
   isSuperAdmin: boolean
+  initialGlobalDebugMode?: boolean
 }
 
 function getInitials(name: string, email: string): string {
@@ -19,9 +21,33 @@ function getInitials(name: string, email: string): string {
   return source.slice(0, 2).toUpperCase()
 }
 
-export default function UserDropdown({ userName, userEmail, isSuperAdmin }: UserDropdownProps) {
+export default function UserDropdown({
+  userName,
+  userEmail,
+  isSuperAdmin,
+  initialGlobalDebugMode = false,
+}: UserDropdownProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  const [debugMode, setDebugMode] = useState(initialGlobalDebugMode)
+
+  useEffect(() => {
+    setDebugMode(initialGlobalDebugMode)
+  }, [initialGlobalDebugMode])
+
+  const handleToggleDebug = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const newVal = !debugMode
+    setDebugMode(newVal)
+
+    const res = await updateGlobalDebugMode(newVal)
+    if (!res.success) {
+      alert(res.error || 'Gagal mengubah Debug Mode')
+      setDebugMode(!newVal)
+    }
+  }
 
   // Close on outside click
   useEffect(() => {
@@ -158,6 +184,21 @@ export default function UserDropdown({ userName, userEmail, isSuperAdmin }: User
                 </svg>
                 Kelola User
               </Link>
+              <button
+                onClick={handleToggleDebug}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/60 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Debug Mode</span>
+                </div>
+                <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 ${debugMode ? 'bg-amber-500' : 'bg-zinc-700'}`}>
+                  <div className={`w-3 h-3 rounded-full bg-white transition-transform duration-200 ${debugMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                </div>
+              </button>
             </div>
             <div className="border-t border-zinc-800" />
           </>

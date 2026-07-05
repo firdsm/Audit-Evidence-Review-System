@@ -48,12 +48,16 @@ interface AuditClientProps {
   }
   aspects: Aspect[]
   initialAssessments: Assessment[]
+  isSuperAdmin?: boolean
+  globalDebugMode?: boolean
 }
 
 export default function AuditClient({
   institution,
   aspects,
   initialAssessments,
+  isSuperAdmin = false,
+  globalDebugMode = false,
 }: AuditClientProps) {
   // Find first indicator to set as default active
   const firstIndicator = aspects[0]?.indicators[0] || null
@@ -96,6 +100,7 @@ export default function AuditClient({
   // Debug states
   const [debugInfo, setDebugInfo] = useState<any>(null)
   const [showDebug, setShowDebug] = useState<boolean>(false)
+
   const [showGuidance, setShowGuidance] = useState<boolean>(false)
   const [showDocsPopover, setShowDocsPopover] = useState<boolean>(false)
   const popoverRef = useRef<HTMLDivElement | null>(null)
@@ -168,6 +173,7 @@ export default function AuditClient({
     setFindingStatus(saved ? saved.finding_status : 'tidak_ada_temuan')
     setNotes(saved ? saved.notes : '')
     setSaveStatus('idle')
+    // We renamed showGuidance to showGuidanceState or kept state. Wait! Line 99 had "const [showGuidance, setShowGuidance] = useState<boolean>(false)" which we replaced but wait, let's keep showGuidance state exactly as it was. Let's correct this in target/replacement chunks to avoid breaking guidance panel state. Let's restore the original guidance state below.
     setShowGuidance(false)
     setShowDocsPopover(false)
   }, [activeIndicator])
@@ -469,7 +475,7 @@ export default function AuditClient({
               >
                 <FolderOpen size={16} />
               </button>
-              {debugInfo && (
+              {globalDebugMode && debugInfo && (
                 <button
                   onClick={() => setShowDebug(!showDebug)}
                   className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-mono rounded border border-zinc-700 cursor-pointer"
@@ -486,7 +492,7 @@ export default function AuditClient({
           </div>
 
           {/* Debug panel */}
-          {showDebug && debugInfo && (
+          {globalDebugMode && showDebug && debugInfo && (
             <div className="p-4 bg-zinc-950 border-b border-zinc-800 text-xs font-mono text-emerald-400 overflow-y-auto max-h-80 shrink-0 select-text">
               <div className="flex justify-between items-center mb-2 pb-1 border-b border-zinc-800">
                 <span className="font-bold text-white text-[10px] uppercase">AERS Debugging Panel</span>

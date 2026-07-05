@@ -20,6 +20,7 @@ interface DashboardClientProps {
   userName?: string
   isSuperAdmin?: boolean
   allCategories: string[]
+  initialGlobalDebugMode?: boolean
 }
 
 // ── Pagination helper ──────────────────────────────────────────────────────
@@ -44,6 +45,7 @@ export default function DashboardClient({
   userName = '',
   isSuperAdmin = false,
   allCategories,
+  initialGlobalDebugMode = false,
 }: DashboardClientProps) {
   const router = useRouter()
 
@@ -115,7 +117,12 @@ export default function DashboardClient({
           </div>
           <div className="flex items-center gap-3">
             <FullscreenButton />
-            <UserDropdown userName={userName} userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
+            <UserDropdown
+              userName={userName}
+              userEmail={userEmail}
+              isSuperAdmin={isSuperAdmin}
+              initialGlobalDebugMode={initialGlobalDebugMode}
+            />
           </div>
         </div>
       </nav>

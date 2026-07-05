@@ -1,7 +1,9 @@
 import React from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getAuditorRole } from '@/lib/auth'
 import AuditClient from './AuditClient'
+import { getGlobalDebugMode } from '@/app/settings_actions'
 
 interface PageProps {
   params: Promise<{
@@ -22,6 +24,11 @@ export default async function AuditPage({ params }: PageProps) {
   if (!user) {
     redirect('/login')
   }
+
+  const role = await getAuditorRole()
+  const isSuperAdmin = role === 'superadmin'
+
+  const globalDebugMode = await getGlobalDebugMode()
 
   // 2. Fetch institution details
   const { data: institution, error: instError } = await supabase
@@ -80,6 +87,8 @@ export default async function AuditPage({ params }: PageProps) {
       institution={institution}
       aspects={formattedAspects}
       initialAssessments={assessments || []}
+      isSuperAdmin={isSuperAdmin}
+      globalDebugMode={globalDebugMode}
     />
   )
 }
