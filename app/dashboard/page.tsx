@@ -46,7 +46,9 @@ export default async function DashboardPage() {
       assessments (
         id,
         score,
-        finding_status,
+        document_reviews (
+          checked
+        ),
         indicators (
           id,
           aspects (
@@ -75,14 +77,12 @@ export default async function DashboardPage() {
       const aspectName = a.indicators?.aspects?.name || ''
       const isSistemAntrian = aspectName.toLowerCase() === 'sistem antrian'
       if (isSistemAntrian) {
-        return a.finding_status !== null && a.finding_status !== undefined
+        // Sistem Antrian: no numeric score — considered complete if any doc is checked
+        const reviews: { checked: boolean }[] = a.document_reviews || []
+        return reviews.some((r) => r.checked)
       } else {
-        return (
-          a.score !== null &&
-          a.score !== undefined &&
-          a.finding_status !== null &&
-          a.finding_status !== undefined
-        )
+        // All other indicators: complete when score is set
+        return a.score !== null && a.score !== undefined
       }
     }).length
 

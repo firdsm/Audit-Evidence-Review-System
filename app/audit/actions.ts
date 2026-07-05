@@ -449,15 +449,20 @@ export async function getEvidenceFilesAction(
   }
 }
 
+export interface DocumentReviewInput {
+  documentId: string
+  checked: boolean
+  note: string | null
+}
+
 /**
- * Action to save/upsert an audit assessment
+ * Action to save/upsert an audit assessment with per-document review data
  */
 export async function saveAssessmentAction(data: {
   institutionId: string
   indicatorId: string
   score: number | null
-  findingStatus: 'tidak_ada_temuan' | 'perlu_perbaikan' | 'bukti_tidak_tersedia'
-  notes: string
+  documentReviews: DocumentReviewInput[]
 }) {
   try {
     const supabase = await createClient()
@@ -504,7 +509,7 @@ export async function saveAssessmentAction(data: {
     const finalScore = isSistemAntrian ? null : data.score
 
     // 4. Upsert assessment record
-    const { error: upsertError } = await supabase
+    const { data: upsertedAssessment, error: upsertError } = await supabase
       .from('assessments')
       .upsert(
         {
@@ -512,15 +517,39 @@ export async function saveAssessmentAction(data: {
           indicator_id: data.indicatorId,
           auditor_id: auditor.id,
           score: finalScore,
-          finding_status: data.findingStatus,
-          notes: data.notes,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'institution_id,indicator_id' }
       )
+      .select('id')
+      .single()
 
     if (upsertError) {
       throw new Error(upsertError.message)
+    }
+
+    const assessmentId = upsertedAssessment?.id
+    if (!assessmentId) {
+      throw new Error('Gagal mendapatkan ID assessment setelah penyimpanan')
+    }
+
+    // 5. Upsert document reviews if any are provided
+    if (data.documentReviews.length > 0) {
+      const reviewRows = data.documentReviews.map((dr) => ({
+        assessment_id: assessmentId,
+        document_id: dr.documentId,
+        checked: dr.checked,
+        note: dr.note,
+        updated_at: new Date().toISOString(),
+      }))
+
+      const { error: reviewError } = await supabase
+        .from('document_reviews')
+        .upsert(reviewRows, { onConflict: 'assessment_id,document_id' })
+
+      if (reviewError) {
+        throw new Error(reviewError.message)
+      }
     }
 
     return { success: true }

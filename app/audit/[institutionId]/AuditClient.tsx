@@ -2,9 +2,32 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { RefreshCw, ChevronDown, ChevronUp, FolderOpen, Info, FileText, Files } from 'lucide-react'
-import { getEvidenceFilesAction, saveAssessmentAction } from '../actions'
+import { RefreshCw, FolderOpen, MessageCircle, Check } from 'lucide-react'
+import { getEvidenceFilesAction, saveAssessmentAction, DocumentReviewInput } from '../actions'
 import FullscreenButton from '@/components/FullscreenButton'
+import indicatorGuidance from '@/indicator-guidance.json'
+
+// Types from JSON guidance
+interface RequiredDocumentDef {
+  id: string
+  name: string
+  order: number
+  required: boolean
+  description?: string
+}
+
+interface IndicatorGuidance {
+  indicator_code: string
+  scale: Array<{ score: number; description: string }>
+  required_documents: RequiredDocumentDef[]
+}
+
+// Get typed guidance data
+const guidanceData = indicatorGuidance as IndicatorGuidance[]
+
+function getGuidance(code: string): IndicatorGuidance | undefined {
+  return guidanceData.find((g) => g.indicator_code === code)
+}
 
 interface Indicator {
   id: string
@@ -13,7 +36,7 @@ interface Indicator {
   name: string
   order_number: number
   scoring_scale?: Array<{ score: number; description: string }> | null
-  required_documents?: string[] | null
+  required_documents?: any
 }
 
 interface Aspect {
@@ -23,12 +46,18 @@ interface Aspect {
   indicators: Indicator[]
 }
 
+interface DocumentReview {
+  id?: string
+  document_id: string
+  checked: boolean
+  note: string | null
+}
+
 interface Assessment {
   id?: string
   indicator_id: string
   score: number | null
-  finding_status: 'tidak_ada_temuan' | 'perlu_perbaikan' | 'bukti_tidak_tersedia'
-  notes: string
+  document_reviews: DocumentReview[]
 }
 
 interface DriveFile {
@@ -52,6 +81,17 @@ interface AuditClientProps {
   globalDebugMode?: boolean
 }
 
+// Build default document reviews from JSON guidance for an indicator code
+function buildDefaultDocReviews(code: string, existing: DocumentReview[]): DocumentReview[] {
+  const guidance = getGuidance(code)
+  if (!guidance) return existing
+
+  return guidance.required_documents.map((doc) => {
+    const found = existing.find((r) => r.document_id === doc.id)
+    return found ?? { document_id: doc.id, checked: false, note: null }
+  })
+}
+
 export default function AuditClient({
   institution,
   aspects,
@@ -63,7 +103,7 @@ export default function AuditClient({
   const firstIndicator = aspects[0]?.indicators[0] || null
   const [activeIndicator, setActiveIndicator] = useState<Indicator | null>(firstIndicator)
 
-  const activeAspect = aspects.find(a => a.indicators.some(i => i.id === activeIndicator?.id))
+  const activeAspect = aspects.find((a) => a.indicators.some((i) => i.id === activeIndicator?.id))
   const isSistemAntrian = activeAspect?.name.toLowerCase() === 'sistem antrian'
 
   // Assessments state
@@ -71,10 +111,9 @@ export default function AuditClient({
 
   // Active indicator form state
   const [score, setScore] = useState<number | null>(null)
-  const [findingStatus, setFindingStatus] = useState<
-    'tidak_ada_temuan' | 'perlu_perbaikan' | 'bukti_tidak_tersedia'
-  >('tidak_ada_temuan')
-  const [notes, setNotes] = useState('')
+  const [documentReviews, setDocumentReviews] = useState<DocumentReview[]>([])
+  // Track which doc rows have expanded note textareas
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set())
 
   // Auto-save status
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -102,80 +141,72 @@ export default function AuditClient({
   const [showDebug, setShowDebug] = useState<boolean>(false)
 
   const [showGuidance, setShowGuidance] = useState<boolean>(false)
-  const [showDocsPopover, setShowDocsPopover] = useState<boolean>(false)
-  const popoverRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        setShowDocsPopover(false)
-      }
-    }
-    if (showDocsPopover) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showDocsPopover])
 
   // Debounce ref
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Helper function to fetch evidence files (supports manual forceRefresh)
-  const fetchEvidenceFiles = useCallback((forceRefresh = false) => {
-    if (!activeIndicator || !institution.drive_folder_id) return
+  const fetchEvidenceFiles = useCallback(
+    (forceRefresh = false) => {
+      if (!activeIndicator || !institution.drive_folder_id) return
 
-    setFilesLoading(true)
-    setFiles([])
-    setActiveFile(null)
-    setFilesError(null)
-    setFolderExists(true)
-    setActiveFolderId(null)
-    setStatusMessage(null)
-    setDebugInfo(null)
-    setScanLimitReached(false)
-    setLoadingFileId(null)
+      setFilesLoading(true)
+      setFiles([])
+      setActiveFile(null)
+      setFilesError(null)
+      setFolderExists(true)
+      setActiveFolderId(null)
+      setStatusMessage(null)
+      setDebugInfo(null)
+      setScanLimitReached(false)
+      setLoadingFileId(null)
 
-    getEvidenceFilesAction(institution.drive_folder_id, activeIndicator.code, forceRefresh).then((res) => {
-      setFilesLoading(false)
-      if (res.success) {
-        setStatusMessage(res.message || null)
-        setFolderExists(res.folderExists !== false)
-        setFiles(res.files || [])
-        setDebugInfo(res.debug || null)
-        setScanLimitReached(!!res.scanLimitReached)
-        
-        // Save the active folder ID
-        const resolvedFolderId = (res as any).driveFolderId || res.debug?.matchedFolderId
-        if (resolvedFolderId) {
-          setActiveFolderId(resolvedFolderId)
+      getEvidenceFilesAction(institution.drive_folder_id, activeIndicator.code, forceRefresh).then(
+        (res) => {
+          setFilesLoading(false)
+          if (res.success) {
+            setStatusMessage(res.message || null)
+            setFolderExists(res.folderExists !== false)
+            setFiles(res.files || [])
+            setDebugInfo(res.debug || null)
+            setScanLimitReached(!!res.scanLimitReached)
+
+            // Save the active folder ID
+            const resolvedFolderId = (res as any).driveFolderId || res.debug?.matchedFolderId
+            if (resolvedFolderId) {
+              setActiveFolderId(resolvedFolderId)
+            }
+
+            // DO NOT set activeFile automatically
+            setActiveFile(null)
+          } else {
+            setFilesError(res.error || 'Gagal memuat dokumen bukti')
+            setFolderExists(true)
+            setScanLimitReached(false)
+            setDebugInfo(null)
+          }
         }
-        
-        // DO NOT set activeFile automatically!
-        setActiveFile(null)
-      } else {
-        setFilesError(res.error || 'Gagal memuat dokumen bukti')
-        setFolderExists(true)
-        setScanLimitReached(false)
-        setDebugInfo(null)
-      }
-    })
-  }, [activeIndicator, institution.drive_folder_id])
+      )
+    },
+    [activeIndicator, institution.drive_folder_id]
+  )
 
   // 1a. Load active indicator's saved assessment values
   useEffect(() => {
     if (!activeIndicator) return
 
     const saved = assessments.find((a) => a.indicator_id === activeIndicator.id)
-    
+
     setScore(saved ? saved.score : null)
-    setFindingStatus(saved ? saved.finding_status : 'tidak_ada_temuan')
-    setNotes(saved ? saved.notes : '')
+
+    // Build document reviews, filling in defaults from JSON guidance for any missing entries
+    const existingReviews = saved?.document_reviews ?? []
+    const reviews = buildDefaultDocReviews(activeIndicator.code, existingReviews)
+    setDocumentReviews(reviews)
+    setExpandedNotes(new Set())
+
     setSaveStatus('idle')
-    // We renamed showGuidance to showGuidanceState or kept state. Wait! Line 99 had "const [showGuidance, setShowGuidance] = useState<boolean>(false)" which we replaced but wait, let's keep showGuidance state exactly as it was. Let's correct this in target/replacement chunks to avoid breaking guidance panel state. Let's restore the original guidance state below.
     setShowGuidance(false)
-    setShowDocsPopover(false)
   }, [activeIndicator])
 
   // 1b. Fetch evidence files on indicator switch
@@ -183,86 +214,102 @@ export default function AuditClient({
     fetchEvidenceFiles(false)
   }, [activeIndicator, institution.drive_folder_id, fetchEvidenceFiles])
 
-  // 2. Debounced Auto-save trigger (driven by user events, not passive effects)
-  const triggerAutoSave = useCallback((
-    currentScore: number | null,
-    currentStatus: 'tidak_ada_temuan' | 'perlu_perbaikan' | 'bukti_tidak_tersedia',
-    currentNotes: string
-  ) => {
-    if (!activeIndicator) return
+  // 2. Debounced Auto-save trigger
+  const triggerAutoSave = useCallback(
+    (currentScore: number | null, currentReviews: DocumentReview[]) => {
+      if (!activeIndicator) return
 
-    setSaveStatus('saving')
+      setSaveStatus('saving')
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
-      const response = await saveAssessmentAction({
-        institutionId: institution.id,
-        indicatorId: activeIndicator.id,
-        score: currentScore,
-        findingStatus: currentStatus,
-        notes: currentNotes,
-      })
-
-      if (response.success) {
-        setSaveStatus('saved')
-        
-        // Update local assessments array so checkmarks and status sync correctly
-        setAssessments((prev) => {
-          const index = prev.findIndex((a) => a.indicator_id === activeIndicator.id)
-          const newVal: Assessment = {
-            indicator_id: activeIndicator.id,
-            score: currentScore,
-            finding_status: currentStatus,
-            notes: currentNotes,
-          }
-          if (index > -1) {
-            const updated = [...prev]
-            updated[index] = newVal
-            return updated
-          }
-          return [...prev, newVal]
-        })
-      } else {
-        setSaveStatus('error')
-        setErrorMessage(response.error || 'Terjadi kesalahan sistem')
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
       }
-    }, 1000)
-  }, [activeIndicator, institution.id])
+
+      saveTimeoutRef.current = setTimeout(async () => {
+        const reviewPayload: DocumentReviewInput[] = currentReviews.map((r) => ({
+          documentId: r.document_id,
+          checked: r.checked,
+          note: r.note,
+        }))
+
+        const response = await saveAssessmentAction({
+          institutionId: institution.id,
+          indicatorId: activeIndicator.id,
+          score: currentScore,
+          documentReviews: reviewPayload,
+        })
+
+        if (response.success) {
+          setSaveStatus('saved')
+
+          // Update local assessments array so checkmarks sync correctly
+          setAssessments((prev) => {
+            const index = prev.findIndex((a) => a.indicator_id === activeIndicator.id)
+            const newVal: Assessment = {
+              indicator_id: activeIndicator.id,
+              score: currentScore,
+              document_reviews: currentReviews,
+            }
+            if (index > -1) {
+              const updated = [...prev]
+              updated[index] = newVal
+              return updated
+            }
+            return [...prev, newVal]
+          })
+        } else {
+          setSaveStatus('error')
+          setErrorMessage(response.error || 'Terjadi kesalahan sistem')
+        }
+      }, 800)
+    },
+    [activeIndicator, institution.id]
+  )
 
   // Handlers for user interactions
   const handleScoreChange = (val: number | null) => {
     setScore(val)
-    triggerAutoSave(val, findingStatus, notes)
+    triggerAutoSave(val, documentReviews)
   }
 
-  const handleStatusChange = (val: 'tidak_ada_temuan' | 'perlu_perbaikan' | 'bukti_tidak_tersedia') => {
-    setFindingStatus(val)
-    triggerAutoSave(score, val, notes)
+  const handleDocChecked = (documentId: string, checked: boolean) => {
+    const updated = documentReviews.map((r) =>
+      r.document_id === documentId ? { ...r, checked } : r
+    )
+    setDocumentReviews(updated)
+    triggerAutoSave(score, updated)
   }
 
-  const handleNotesChange = (val: string) => {
-    setNotes(val)
-    triggerAutoSave(score, findingStatus, val)
+  const handleDocNoteChange = (documentId: string, note: string) => {
+    const updated = documentReviews.map((r) =>
+      r.document_id === documentId ? { ...r, note: note || null } : r
+    )
+    setDocumentReviews(updated)
+    triggerAutoSave(score, updated)
   }
 
-  // Helper to check if indicator is evaluated
+  const toggleNoteExpanded = (documentId: string) => {
+    setExpandedNotes((prev) => {
+      const next = new Set(prev)
+      if (next.has(documentId)) {
+        next.delete(documentId)
+      } else {
+        next.add(documentId)
+      }
+      return next
+    })
+  }
+
+  // Helper to check if indicator is evaluated (has a score for non-Sistem Antrian, or any doc reviews)
   const isEvaluated = (indicatorId: string, aspectName: string) => {
-    const isSistemAntrian = aspectName.toLowerCase() === 'sistem antrian'
+    const isSA = aspectName.toLowerCase() === 'sistem antrian'
     const assessment = assessments.find((a) => a.indicator_id === indicatorId)
     if (!assessment) return false
 
-    if (isSistemAntrian) {
-      return assessment.finding_status !== null && assessment.finding_status !== undefined
+    if (isSA) {
+      return (assessment.document_reviews || []).some((r) => r.checked)
     } else {
-      return (
-        assessment.score !== null &&
-        assessment.score !== undefined &&
-        assessment.finding_status !== null &&
-        assessment.finding_status !== undefined
-      )
+      return assessment.score !== null && assessment.score !== undefined
     }
   }
 
@@ -277,56 +324,14 @@ export default function AuditClient({
     window.open(url, '_blank')
   }
 
-  // Export Temuan Audit to CSV (compatible with Excel)
-  const exportTemuanCSV = () => {
-    const csvRows = []
-    
-    // Header Row
-    csvRows.push(['Kode Indikator', 'Nama Indikator', 'Aspek', 'Nilai Kepatuhan', 'Status Temuan', 'Catatan Auditor'])
-    
-    aspects.forEach(aspect => {
-      const isAspectSistemAntrian = aspect.name.toLowerCase() === 'sistem antrian'
-      aspect.indicators.forEach(ind => {
-        const assessment = assessments.find(a => a.indicator_id === ind.id)
-        
-        // Empty string if it's Sistem Antrian, otherwise show score value or empty if missing
-        const scoreVal = isAspectSistemAntrian 
-          ? '' 
-          : (assessment?.score !== undefined && assessment?.score !== null ? assessment.score : '')
-          
-        const statusVal = assessment?.finding_status || 'belum_diisi'
-        const notesVal = assessment?.notes || ''
-
-        // For Temuan Audit report, filter only assessments with findings
-        if (statusVal === 'tidak_ada_temuan' || statusVal === 'belum_diisi') {
-          return
-        }
-
-        csvRows.push([
-          ind.code,
-          ind.name,
-          aspect.name,
-          scoreVal,
-          statusVal,
-          notesVal
-        ])
-      })
-    })
-
-    // Generate CSV content with UTF-8 BOM for Excel compatibility
-    const csvString = "\ufeff" + csvRows.map(row => 
-      row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')
-    ).join('\n')
-
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', `Temuan_Audit_${institution.name.replace(/[^a-z0-9]/gi, '_')}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  // Export Temuan — document review checklist report
+  const exportTemuan = () => {
+    const url = `/api/export-temuan?institutionId=${encodeURIComponent(institution.id)}`
+    window.open(url, '_blank')
   }
+
+  // Current indicator guidance from JSON
+  const currentGuidance = activeIndicator ? getGuidance(activeIndicator.code) : undefined
 
   return (
     <div className="relative h-screen bg-zinc-950 text-white font-sans flex flex-col overflow-hidden">
@@ -364,12 +369,12 @@ export default function AuditClient({
               <span>Export Hasil Penilaian</span>
             </button>
             <button
-              onClick={exportTemuanCSV}
+              onClick={exportTemuan}
               className="px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
-              title="Ekspor Temuan Audit ke Excel/CSV"
+              title="Ekspor Pengecekan Dokumen Dukung ke Excel"
             >
               <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
               <span>Export Temuan</span>
             </button>
@@ -399,7 +404,7 @@ export default function AuditClient({
 
       {/* 3-Panel Content Area */}
       <div className="flex-1 flex overflow-hidden relative z-10">
-        
+
         {/* PANEL KIRI: Aspects & Indicators */}
         <aside className="w-80 border-r border-zinc-800 bg-zinc-900/10 flex flex-col overflow-hidden shrink-0 select-none">
           <div className="p-4 border-b border-zinc-800 bg-zinc-900/20 shrink-0">
@@ -412,12 +417,12 @@ export default function AuditClient({
                 <h4 className="px-3 py-2 text-xs font-extrabold text-zinc-400 uppercase tracking-tight">
                   {aspect.order_number}. {aspect.name}
                 </h4>
-                
+
                 <div className="space-y-0.5">
                   {aspect.indicators.map((ind) => {
                     const active = activeIndicator?.id === ind.id
                     const completed = isEvaluated(ind.id, aspect.name)
-                    
+
                     return (
                       <button
                         key={ind.id}
@@ -431,7 +436,7 @@ export default function AuditClient({
                         <span className="leading-relaxed">
                           <span className="font-bold mr-1">{ind.code}</span> {ind.name}
                         </span>
-                        
+
                         {completed && (
                           <span className={`shrink-0 mt-0.5 ${active ? 'text-white' : 'text-green-500'}`}>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,7 +476,7 @@ export default function AuditClient({
                 }}
                 disabled={filesLoading || !activeFolderId}
                 className="p-1 text-zinc-400 hover:text-white disabled:opacity-50 transition-colors cursor-pointer"
-                title={activeFolderId ? "Buka folder Google Drive indikator" : "Folder Google Drive tidak tersedia untuk indikator ini"}
+                title={activeFolderId ? 'Buka folder Google Drive indikator' : 'Folder Google Drive tidak tersedia untuk indikator ini'}
               >
                 <FolderOpen size={16} />
               </button>
@@ -513,7 +518,7 @@ export default function AuditClient({
               <p className="text-zinc-200 mb-2">
                 Aspek: <span className="text-blue-400 font-bold">"{debugInfo.aspectName}"</span> (Urutan ke-{debugInfo.aspectOrderNumber})
               </p>
-              
+
               <p className="text-zinc-500 mb-1">// Folder Aspek yang Ditemukan di Google Drive:</p>
               <p className="text-zinc-200 mb-2">
                 {debugInfo.matchedAspectFolderId ? (
@@ -534,7 +539,7 @@ export default function AuditClient({
 
               <p className="text-zinc-500 mb-1">// Posisi Indikator Relatif Terhadap Aspek (Database Mappings):</p>
               <p className="text-zinc-200 mb-2">
-                Posisi Relatif: <span className="text-blue-400 font-bold">{debugInfo.mappedFolderPosition ?? 'Belum dipetakan'}</span> 
+                Posisi Relatif: <span className="text-blue-400 font-bold">{debugInfo.mappedFolderPosition ?? 'Belum dipetakan'}</span>
                 {debugInfo.mappedIndex !== null && ` (Index: ${debugInfo.mappedIndex})`}
               </p>
 
@@ -642,8 +647,7 @@ export default function AuditClient({
                 <div className="p-2 space-y-1">
                   {files.map((file) => {
                     const isPreviewable =
-                      file.mimeType === 'application/pdf' ||
-                      file.mimeType.startsWith('image/')
+                      file.mimeType === 'application/pdf' || file.mimeType.startsWith('image/')
                     const isActive = activeFile?.id === file.id
 
                     return (
@@ -684,7 +688,7 @@ export default function AuditClient({
                             </svg>
                           )}
                         </span>
-                        
+
                         <div className="space-y-0.5 truncate">
                           <p className="font-medium truncate leading-tight">{file.name}</p>
                           {file.subfolderName && (
@@ -709,8 +713,7 @@ export default function AuditClient({
                 <div className="flex-1 flex flex-col overflow-hidden space-y-4">
                   {/* Preview Area */}
                   <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden relative">
-                    {activeFile.mimeType === 'application/pdf' ||
-                    activeFile.mimeType.startsWith('image/') ? (
+                    {activeFile.mimeType === 'application/pdf' || activeFile.mimeType.startsWith('image/') ? (
                       <>
                         <iframe
                           src={`https://drive.google.com/file/d/${activeFile.id}/preview`}
@@ -757,8 +760,7 @@ export default function AuditClient({
                   </div>
 
                   {/* Actions for PDF/Images */}
-                  {(activeFile.mimeType === 'application/pdf' ||
-                    activeFile.mimeType.startsWith('image/')) && (
+                  {(activeFile.mimeType === 'application/pdf' || activeFile.mimeType.startsWith('image/')) && (
                     <div className="flex justify-between items-center text-xs px-2 shrink-0">
                       <span className="text-zinc-500 font-mono">Format: {activeFile.mimeType}</span>
                       <a
@@ -784,8 +786,8 @@ export default function AuditClient({
                     {!folderExists ? 'Folder Belum Tersedia' : 'Pilih Berkas Pratinjau'}
                   </p>
                   <p className="text-xs max-w-xs mx-auto">
-                    {!folderExists 
-                      ? 'Silakan unggah dokumen bukti atau gunakan tombol Google Drive di atas.' 
+                    {!folderExists
+                      ? 'Silakan unggah dokumen bukti atau gunakan tombol Google Drive di atas.'
                       : 'Klik berkas di bilah kiri panel untuk menampilkan dokumen bukti di sini secara instan.'}
                   </p>
                 </div>
@@ -795,158 +797,181 @@ export default function AuditClient({
         </section>
 
         {/* PANEL KANAN: Form Penilaian Audit (Auto-Save) */}
-        <main className="w-96 bg-zinc-900/10 p-6 flex flex-col overflow-y-auto shrink-0 select-none space-y-6">
+        <main className="w-96 bg-zinc-900/10 flex flex-col overflow-y-auto shrink-0 select-none">
           {activeIndicator ? (
             <>
               {/* Active Indicator Title */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between relative">
-                  <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-md text-[10px] font-extrabold uppercase border border-blue-500/20">
-                    {activeIndicator.code}
-                  </span>
-                  {activeIndicator?.required_documents && activeIndicator.required_documents.length > 0 && (
-                    <div className="relative inline-block" ref={popoverRef}>
-                      <button
-                        type="button"
-                        onClick={() => setShowDocsPopover(!showDocsPopover)}
-                        className="bg-transparent border border-zinc-800 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 px-2 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors leading-none"
-                        aria-label="Lihat dokumen yang perlu dilampirkan"
-                      >
-                        <Files size={12} aria-hidden="true" />
-                        <span>List Dokumen</span>
-                      </button>
-                      
-                      {showDocsPopover && (
-                        <div className="absolute right-0 mt-2 z-50 w-[260px] p-3 rounded-[12px] bg-zinc-900 border border-zinc-800 shadow-2xl flex flex-col">
-                          <h4 className="text-[12px] font-semibold text-zinc-400 m-0 pb-[10px] mb-[10px] border-b-[0.5px] border-zinc-800/60 leading-none">
-                            Dokumen yang perlu dilampirkan
-                          </h4>
-                          <ul className="space-y-[6px] m-0 p-0 list-none max-h-[320px] overflow-y-auto thin-scrollbar">
-                            {activeIndicator.required_documents.map((doc, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-[12px] text-zinc-300 leading-[1.5] p-0">
-                                <FileText size={13} className="text-zinc-500 shrink-0 mt-[1px]" />
-                                <span>{doc}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+              <div className="px-6 pt-6 pb-4 border-b border-zinc-800/60 space-y-1">
+                <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-md text-[10px] font-extrabold uppercase border border-blue-500/20">
+                  {activeIndicator.code}
+                </span>
                 <h3 className="text-lg font-bold text-white tracking-tight pt-1 leading-tight">
                   {activeIndicator.name}
                 </h3>
               </div>
 
-              {/* Form Input fields */}
-              <div className="space-y-5">
-                                {/* 1. Score Rating (0-5) */}
-                {!isSistemAntrian && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-[6px] mb-[10px] relative">
-                      <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 m-0">
-                        Nilai kepatuhan
-                      </p>
-                    </div>
-                    
-                    <div className="flex flex-col gap-[6px]">
-                      {(() => {
-                        const scales = activeIndicator?.scoring_scale && activeIndicator.scoring_scale.length > 0
+              {/* Score Section */}
+              {!isSistemAntrian && (
+                <div className="px-6 py-5 border-b border-zinc-800/60 space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    Nilai kepatuhan
+                  </p>
+
+                  <div className="flex flex-col gap-[6px]">
+                    {(() => {
+                      const scales =
+                        activeIndicator?.scoring_scale && activeIndicator.scoring_scale.length > 0
                           ? activeIndicator.scoring_scale
-                          : [0, 1, 2, 3, 4, 5].map(v => ({ score: v, description: `Skor ${v}` }));
+                          : [0, 1, 2, 3, 4, 5].map((v) => ({ score: v, description: `Skor ${v}` }))
 
-                        return scales.map((item) => {
-                          const selected = score === item.score;
-                          
-                          // Style variables based on score
-                          let rowClass = "bg-zinc-950 border-[0.5px] border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200";
-                          let badgeClass = "bg-zinc-900 border-[0.5px] border-zinc-800 text-zinc-400";
-                          let textClass = "text-zinc-500 font-normal";
+                      return scales.map((item) => {
+                        const selected = score === item.score
 
-                          if (selected) {
-                            if (item.score === 0) {
-                              rowClass = "bg-zinc-900 border-[1.5px] border-zinc-400 text-zinc-200";
-                              badgeClass = "bg-zinc-800 border-[0.5px] border-zinc-600 text-zinc-200";
-                              textClass = "text-zinc-300 font-medium";
-                            } else if (item.score === 1 || item.score === 2) {
-                              rowClass = "bg-amber-500/5 border-[1.5px] border-amber-500/40 text-amber-400";
-                              badgeClass = "bg-amber-500/10 border border-amber-500/30 text-amber-400";
-                              textClass = "text-amber-400 font-medium";
-                            } else if (item.score === 3 || item.score === 4) {
-                              rowClass = "bg-emerald-500/5 border-[1.5px] border-emerald-500/40 text-emerald-400";
-                              badgeClass = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
-                              textClass = "text-emerald-400 font-medium";
-                            } else if (item.score === 5) {
-                              rowClass = "bg-blue-500/5 border-[1.5px] border-blue-500/40 text-blue-400";
-                              badgeClass = "bg-blue-500/10 border border-blue-500/30 text-blue-400";
-                              textClass = "text-blue-400 font-medium";
-                            }
+                        let rowClass = 'bg-zinc-950 border-[0.5px] border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                        let badgeClass = 'bg-zinc-900 border-[0.5px] border-zinc-800 text-zinc-400'
+                        let textClass = 'text-zinc-500 font-normal'
+
+                        if (selected) {
+                          if (item.score === 0) {
+                            rowClass = 'bg-zinc-900 border-[1.5px] border-zinc-400 text-zinc-200'
+                            badgeClass = 'bg-zinc-800 border-[0.5px] border-zinc-600 text-zinc-200'
+                            textClass = 'text-zinc-300 font-medium'
+                          } else if (item.score === 1 || item.score === 2) {
+                            rowClass = 'bg-amber-500/5 border-[1.5px] border-amber-500/40 text-amber-400'
+                            badgeClass = 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
+                            textClass = 'text-amber-400 font-medium'
+                          } else if (item.score === 3 || item.score === 4) {
+                            rowClass = 'bg-emerald-500/5 border-[1.5px] border-emerald-500/40 text-emerald-400'
+                            badgeClass = 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+                            textClass = 'text-emerald-400 font-medium'
+                          } else if (item.score === 5) {
+                            rowClass = 'bg-blue-500/5 border-[1.5px] border-blue-500/40 text-blue-400'
+                            badgeClass = 'bg-blue-500/10 border border-blue-500/30 text-blue-400'
+                            textClass = 'text-blue-400 font-medium'
                           }
+                        }
 
-                          return (
-                            <button
-                              key={item.score}
-                              type="button"
-                              onClick={() => handleScoreChange(item.score)}
-                              className={`flex items-center gap-[10px] p-[8px_10px] rounded-xl border transition-all text-left cursor-pointer ${rowClass}`}
-                            >
-                              <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-[13px] font-medium ${badgeClass}`}>
-                                {item.score}
-                              </div>
-                              <p className={`text-xs leading-[1.4] m-0 ${textClass}`}>
-                                {item.description}
-                              </p>
-                            </button>
-                          );
-                        });
-                      })()}
-                    </div>
+                        return (
+                          <button
+                            key={item.score}
+                            type="button"
+                            onClick={() => handleScoreChange(item.score)}
+                            className={`flex items-center gap-[10px] p-[8px_10px] rounded-xl border transition-all text-left cursor-pointer ${rowClass}`}
+                          >
+                            <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-[13px] font-medium ${badgeClass}`}>
+                              {item.score}
+                            </div>
+                            <p className={`text-xs leading-[1.4] m-0 ${textClass}`}>
+                              {item.description}
+                            </p>
+                          </button>
+                        )
+                      })
+                    })()}
                   </div>
-                )}
-                {/* 2. Finding Status (Dropdown) */}
-                <div className="space-y-2">
-                  <label htmlFor="finding-status" className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                    Status Temuan
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="finding-status"
-                      value={findingStatus}
-                      onChange={(e: any) => handleStatusChange(e.target.value)}
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all appearance-none cursor-pointer"
-                    >
-                      <option value="tidak_ada_temuan">Tidak Ada Temuan</option>
-                      <option value="perlu_perbaikan">Perlu Perbaikan</option>
-                      <option value="bukti_tidak_tersedia">Bukti Tidak Tersedia</option>
-                    </select>
-                    <span className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-500">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                </div>
+              )}
+
+              {/* Required Documents Checklist */}
+              <div className="px-6 py-5 space-y-1 flex-1">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    Dokumen Dukung
+                  </p>
+                  {documentReviews.length > 0 && (
+                    <span className="text-[10px] text-zinc-500">
+                      {documentReviews.filter((r) => r.checked).length}/{documentReviews.length} diperiksa
                     </span>
+                  )}
+                </div>
+
+                {currentGuidance && currentGuidance.required_documents.length > 0 ? (
+                  <div className="space-y-1">
+                    {currentGuidance.required_documents
+                      .sort((a, b) => a.order - b.order)
+                      .map((docDef) => {
+                        const review = documentReviews.find((r) => r.document_id === docDef.id)
+                        const isChecked = review?.checked ?? false
+                        const hasNote = !!(review?.note && review.note.trim().length > 0)
+                        const isExpanded = expandedNotes.has(docDef.id)
+                        const currentNote = review?.note ?? ''
+
+                        return (
+                          <div
+                            key={docDef.id}
+                            className="rounded-xl overflow-hidden transition-all"
+                          >
+                            {/* Doc row */}
+                            <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isChecked ? 'bg-emerald-500/5' : 'hover:bg-zinc-900/60'}`}>
+                              {/* Checkbox */}
+                              <button
+                                type="button"
+                                onClick={() => handleDocChecked(docDef.id, !isChecked)}
+                                className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${
+                                  isChecked
+                                    ? 'bg-emerald-500 border-emerald-500'
+                                    : 'border-zinc-600 hover:border-zinc-400 bg-transparent'
+                                }`}
+                                aria-label={isChecked ? 'Batalkan tanda periksa' : 'Tandai sudah diperiksa'}
+                              >
+                                {isChecked && <Check size={11} strokeWidth={3} className="text-white" />}
+                              </button>
+
+                              {/* Doc name */}
+                              <span
+                                className={`flex-1 text-xs leading-snug transition-colors ${
+                                  isChecked ? 'text-zinc-300 line-through decoration-zinc-600' : 'text-zinc-300'
+                                }`}
+                              >
+                                {docDef.name}
+                              </span>
+
+                              {/* Note toggle button */}
+                              <button
+                                type="button"
+                                onClick={() => toggleNoteExpanded(docDef.id)}
+                                className={`shrink-0 p-1 rounded-lg transition-all cursor-pointer ${
+                                  hasNote
+                                    ? 'text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20'
+                                    : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800'
+                                }`}
+                                title={hasNote ? 'Lihat/edit catatan' : 'Tambah catatan'}
+                                aria-label={hasNote ? 'Lihat catatan' : 'Tambah catatan'}
+                              >
+                                <MessageCircle
+                                size={13}
+                                className={hasNote ? 'fill-current' : ''}
+                              />
+                              </button>
+                            </div>
+
+                            {/* Expandable note textarea */}
+                            <div
+                              className={`overflow-hidden transition-all duration-200 ease-in-out ${
+                                isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                              }`}
+                            >
+                              <div className="px-3 pb-3 pt-1">
+                                <textarea
+                                  rows={3}
+                                  value={currentNote}
+                                  onChange={(e) => handleDocNoteChange(docDef.id, e.target.value)}
+                                  placeholder="Tulis catatan untuk dokumen ini..."
+                                  className="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/40 focus:border-blue-500/60 transition-all resize-none placeholder-zinc-700 leading-relaxed"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
                   </div>
-                </div>
-
-                {/* 3. Notes (Textarea) */}
-                <div className="space-y-2">
-                  <label htmlFor="audit-notes" className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                    Catatan Temuan / Penjelasan
-                  </label>
-                  <textarea
-                    id="audit-notes"
-                    rows={8}
-                    value={notes}
-                    onChange={(e) => handleNotesChange(e.target.value)}
-                    placeholder="Tulis catatan penelaahan bukti di sini. Penilaian otomatis disimpan ketika Anda selesai mengetik..."
-                    className="w-full p-4 bg-zinc-950 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all resize-none placeholder-zinc-700"
-                  />
-                </div>
-
+                ) : (
+                  <p className="text-xs text-zinc-600 italic">Tidak ada dokumen wajib tercantum untuk indikator ini.</p>
+                )}
               </div>
 
               {/* Status Save Indicator Footer */}
-              <div className="pt-4 border-t border-zinc-800 text-[10px] text-zinc-500 flex justify-between items-center">
+              <div className="px-6 py-4 border-t border-zinc-800 text-[10px] text-zinc-500 flex justify-between items-center shrink-0">
                 <span>Auto-save aktif</span>
                 <span>Pencocokan via (institution_id, indicator_id)</span>
               </div>

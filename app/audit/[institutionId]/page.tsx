@@ -72,10 +72,20 @@ export default async function AuditPage({ params }: PageProps) {
     ),
   }))
 
-  // 4. Fetch existing assessments for this institution
+  // 4. Fetch existing assessments for this institution, including document reviews
   const { data: assessments, error: assessError } = await supabase
     .from('assessments')
-    .select('id, indicator_id, score, finding_status, notes')
+    .select(`
+      id,
+      indicator_id,
+      score,
+      document_reviews (
+        id,
+        document_id,
+        checked,
+        note
+      )
+    `)
     .eq('institution_id', institutionId)
 
   if (assessError) {
