@@ -322,9 +322,9 @@ export async function getEvidenceFilesAction(
       debug.matchedFolderName = matchedAspectFolder.name || null
       debug.matchedFolderId = matchedAspectFolder.id || null
 
-      // Save resolved folder ID to database asynchronously
+      // Save resolved folder ID to database (awaited to ensure persistence in serverless)
       if (institution && indicator && matchedAspectFolder.id) {
-        supabase
+        const { error: upsertError } = await supabase
           .from('institution_indicator_folders')
           .upsert({
             institution_id: institution.id,
@@ -332,9 +332,7 @@ export async function getEvidenceFilesAction(
             drive_folder_id: matchedAspectFolder.id,
             last_resolved_at: new Date().toISOString()
           }, { onConflict: 'institution_id,indicator_id' })
-          .then(({ error: upsertError }) => {
-            if (upsertError) console.error('[Folder ID Auto-save Error]:', upsertError)
-          })
+        if (upsertError) console.error('[Folder ID Auto-save Error]:', upsertError)
       }
 
       const scanState = { count: 0, limitReached: false }
@@ -393,9 +391,9 @@ export async function getEvidenceFilesAction(
         debug.matchedFolderName = matchedFolder.name || null
         debug.matchedFolderId = matchedFolder.id || null
 
-        // Save resolved folder ID to database asynchronously
+        // Save resolved folder ID to database (awaited to ensure persistence in serverless)
         if (institution && indicator && matchedFolder.id) {
-          supabase
+          const { error: upsertError } = await supabase
             .from('institution_indicator_folders')
             .upsert({
               institution_id: institution.id,
@@ -403,9 +401,7 @@ export async function getEvidenceFilesAction(
               drive_folder_id: matchedFolder.id,
               last_resolved_at: new Date().toISOString()
             }, { onConflict: 'institution_id,indicator_id' })
-            .then(({ error: upsertError }) => {
-              if (upsertError) console.error('[Folder ID Auto-save Error]:', upsertError)
-            })
+          if (upsertError) console.error('[Folder ID Auto-save Error]:', upsertError)
         }
 
         const scanState = { count: 0, limitReached: false }

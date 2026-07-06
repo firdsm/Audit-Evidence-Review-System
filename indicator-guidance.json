@@ -1579,8 +1579,43 @@
             },
             {
                 "id": "IND-25-DOC-02",
-                "name": "Foto Kondisi Sarana Pengaduan: Kotak saran/pengaduan; Ruang khusus; Petugas khusus; Air minum/makanan ringan; Register Konsultasi dan Pengaduan; Publikasi informasi terkait mekanisme konsultasi dan pengaduan (poster/spanduk/leaflet/buku/dokumen/bahan cetak lain)",
+                "name": "Kotak saran/pengaduan",
                 "order": 2,
+                "required": true,
+                "description": ""
+            },
+            {
+                "id": "IND-25-DOC-03",
+                "name": "Ruang khusus",
+                "order": 3,
+                "required": true,
+                "description": ""
+            },
+            {
+                "id": "IND-25-DOC-04",
+                "name": "Petugas khusus",
+                "order": 4,
+                "required": true,
+                "description": ""
+            },
+            {
+                "id": "IND-25-DOC-05",
+                "name": "Air minum/makanan ringan",
+                "order": 5,
+                "required": true,
+                "description": ""
+            },
+            {
+                "id": "IND-25-DOC-06",
+                "name": "Register Konsultasi dan Pengaduan",
+                "order": 6,
+                "required": true,
+                "description": ""
+            },
+            {
+                "id": "IND-25-DOC-07",
+                "name": "Publikasi informasi terkait mekanisme konsultasi dan pengaduan (poster/spanduk/leaflet/buku/dokumen/bahan cetak lain",
+                "order": 7,
                 "required": true,
                 "description": ""
             }
