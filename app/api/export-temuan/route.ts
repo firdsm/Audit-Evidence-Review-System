@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
         for (const doc of sortedDocs) {
           rowNo++
           const review = docReviews.find((r) => r.document_id === doc.id)
-          const status = review?.checked ? 'OK' : '-'
+          const status = review?.checked ? 'OK' : 'Tidak ada'
           const catatan = review?.note ?? ''
 
           const row = ws.addRow([
