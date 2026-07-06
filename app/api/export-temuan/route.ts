@@ -169,12 +169,12 @@ export async function GET(request: NextRequest) {
     const TABLE_HEADER_FILL: ExcelJS.FillPattern = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF1F3864' },
+      fgColor: { argb: 'FFD9E2F3' }, // soft blue for dark-text header
     }
 
     tableHeaderRow.eachCell((cell) => {
       cell.fill = TABLE_HEADER_FILL
-      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } }
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF111111' } }
       cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
       cell.border = {
         top: { style: 'thin', color: { argb: 'FFBFBFBF' } },
@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
             '—',
             '',
           ])
-          styleDataRow(row, rowNo, aspectFill, BORDER_STYLE)
+          styleDataRow(row, aspectFill, BORDER_STYLE, false)
           continue
         }
 
@@ -260,7 +260,7 @@ export async function GET(request: NextRequest) {
             catatan,
           ])
 
-          styleDataRow(row, rowNo, aspectFill, BORDER_STYLE)
+          styleDataRow(row, aspectFill, BORDER_STYLE, catatan.length > 0)
 
           // Auto row height based on longest content (doc name or catatan)
           const CHAR_PER_LINE_DOC = 42   // approx chars per line at col width 40
@@ -324,14 +324,22 @@ export async function GET(request: NextRequest) {
 // Helper: apply fill, alignment, and border to a data row
 function styleDataRow(
   row: ExcelJS.Row,
-  rowNo: number,
   fill: ExcelJS.FillPattern,
-  border: Partial<ExcelJS.Borders>
+  border: Partial<ExcelJS.Borders>,
+  hasNote: boolean
 ) {
-  const BLACK = { argb: 'FF111111' }
+  const BLACK   = { argb: 'FF111111' }
+  const GREEN   = { argb: 'FF1A6B35' }  // professional dark green for 'OK'
+  const GREY    = { argb: 'FFAAAAAA' }  // muted grey for '-'
+  // Soft yellow highlight for rows with notes (cols 4, 5, 6)
+  const NOTE_FILL: ExcelJS.FillPattern = {
+    type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFBCC' },
+  }
 
   row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-    cell.fill = fill
+    // Apply yellow highlight on doc+status+catatan cols when row has a note
+    const useNoteFill = hasNote && (colNumber === 4 || colNumber === 5 || colNumber === 6)
+    cell.fill = useNoteFill ? NOTE_FILL : fill
     cell.border = border as ExcelJS.Borders
     cell.font = { name: 'Calibri', size: 10.5, color: BLACK }
 
@@ -348,12 +356,11 @@ function styleDataRow(
     } else if (colNumber === 5) {
       // Status - center
       cell.alignment = { horizontal: 'center', vertical: 'middle' }
-      // Bold 'OK', dimmed '-'
       const val = String(cell.value ?? '')
       if (val === 'OK') {
-        cell.font = { name: 'Calibri', size: 10.5, color: BLACK, bold: true }
+        cell.font = { name: 'Calibri', size: 10.5, color: GREEN, bold: true }
       } else {
-        cell.font = { name: 'Calibri', size: 10.5, color: { argb: 'FF999999' } }
+        cell.font = { name: 'Calibri', size: 10.5, color: GREY }
       }
     }
   })
