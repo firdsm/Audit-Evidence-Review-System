@@ -447,7 +447,7 @@ export default function AuditClient({
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-10">
 
         {/* PANEL KIRI: Aspects & Indicators */}
-        <aside className={`${activeTab === 'indicators' ? 'flex-1 w-full' : 'hidden'} lg:flex-none lg:w-80 border-r border-zinc-800 bg-zinc-900/10 flex flex-col overflow-hidden lg:shrink-0 select-none`}>
+        <aside className={`${activeTab === 'indicators' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none lg:w-80 border-r border-zinc-800 bg-zinc-900/10 flex-col overflow-hidden lg:shrink-0 select-none`}>
           <div className="p-4 border-b border-zinc-800 bg-zinc-900/20 shrink-0">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Daftar Indikator Penilaian</span>
           </div>
@@ -498,8 +498,8 @@ export default function AuditClient({
         </aside>
 
         {/* PANEL TENGAH: Google Drive Evidence Preview */}
-        <section className={`${activeTab === 'files' ? 'flex-1 w-full' : 'hidden'} lg:flex-1 flex flex-col bg-zinc-900/5 overflow-hidden border-r border-zinc-800`}>
-          <div className={`p-4 border-b border-zinc-800 bg-zinc-900/20 ${activeFile ? 'hidden' : 'flex'} justify-between items-center shrink-0`}>
+        <section className={`${activeTab === 'files' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-1 flex flex-col bg-zinc-900/5 overflow-hidden border-r border-zinc-800`}>
+          <div className={`p-4 border-b border-zinc-800 bg-zinc-900/20 ${activeFile ? 'hidden md:flex' : 'flex'} justify-between items-center shrink-0`}>
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Berkas Bukti (Google Drive)</span>
             <div className="flex items-center gap-2">
               {folderExists && (
@@ -643,8 +643,8 @@ export default function AuditClient({
           )}
 
           {/* Scan recursion limit reached banner */}
-          {scanLimitReached && !activeFile && (
-            <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-500 text-xs flex items-center justify-between gap-3 shrink-0">
+          {scanLimitReached && (
+            <div className={`p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-500 text-xs justify-between gap-3 shrink-0 ${activeFile ? 'hidden md:flex' : 'flex'}`}>
               <div className="flex items-center gap-2">
                 <svg className="w-4.5 h-4.5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -664,7 +664,7 @@ export default function AuditClient({
 
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             {/* Sidebar file list */}
-            <div className={`w-full md:w-64 border-b md:border-b-0 md:border-r border-zinc-800 bg-zinc-900/10 ${activeFile ? 'hidden' : 'flex'} flex-col overflow-y-auto shrink-0`}>
+            <div className={`w-full md:w-64 border-b md:border-b-0 md:border-r border-zinc-800 bg-zinc-900/10 ${activeFile ? 'hidden md:flex' : 'flex'} flex-col overflow-y-auto shrink-0`}>
               {filesLoading ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 gap-2 text-zinc-500">
                   <svg className="animate-spin h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24">
@@ -803,7 +803,7 @@ export default function AuditClient({
                     )}
                   </div>
                   {/* Footer Back Button */}
-                  <div className="pt-2 flex justify-center shrink-0">
+                  <div className="pt-2 flex md:hidden justify-center shrink-0">
                     <button
                       onClick={() => setActiveFile(null)}
                       className="px-6 py-2.5 bg-zinc-850 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
@@ -835,7 +835,7 @@ export default function AuditClient({
         </section>
 
         {/* PANEL KANAN: Form Penilaian Audit (Auto-Save) */}
-        <main className={`${activeTab === 'form' ? 'flex-1 w-full' : 'hidden'} lg:flex-none lg:w-96 bg-zinc-900/10 flex flex-col overflow-y-auto lg:shrink-0 select-none`}>
+        <main className={`${activeTab === 'form' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none lg:w-96 bg-zinc-900/10 flex flex-col overflow-y-auto lg:shrink-0 select-none`}>
           {activeIndicator ? (
             <>
               {/* Active Indicator Title */}
