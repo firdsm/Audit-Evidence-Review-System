@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { RefreshCw, FolderOpen, MessageCircle, Check } from 'lucide-react'
 import { getEvidenceFilesAction, saveAssessmentAction, DocumentReviewInput } from '../actions'
 import FullscreenButton from '@/components/FullscreenButton'
+import ReferenceDatesPanel from '@/components/ReferenceDatesPanel'
 import indicatorGuidance from '@/indicator-guidance.json'
 
 // Types from JSON guidance
@@ -1041,6 +1042,9 @@ export default function AuditClient({
         </main>
 
       </div>
+
+      {/* Floating Reference Dates Panel */}
+      <ReferenceDatesPanel institutionId={institution.id} />
     </div>
   )
 }

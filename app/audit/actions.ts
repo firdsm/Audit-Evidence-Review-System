@@ -554,3 +554,81 @@ export async function saveAssessmentAction(data: {
     return { success: false, error: error.message || 'Gagal menyimpan penilaian' }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Institution Note Actions  (table: institution_notes)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface InstitutionNote {
+  note: string | null
+}
+
+/**
+ * Fetch the free-text note for a given institution.
+ * Returns { note: null } if no row exists yet.
+ */
+export async function getInstitutionNoteAction(
+  institutionId: string
+): Promise<{ success: boolean; data?: InstitutionNote; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Sesi habis, silakan login kembali' }
+
+    const { data, error } = await supabase
+      .from('institution_notes')
+      .select('note')
+      .eq('institution_id', institutionId)
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+
+    return {
+      success: true,
+      data: data ?? { note: null },
+    }
+  } catch (error: any) {
+    console.error('Error fetching institution note:', error)
+    return { success: false, error: error.message || 'Gagal memuat catatan institusi' }
+  }
+}
+
+/**
+ * Upsert the free-text note for a given institution.
+ * Uses UNIQUE(institution_id) constraint as the conflict target.
+ */
+export async function upsertInstitutionNoteAction(
+  institutionId: string,
+  note: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Sesi habis, silakan login kembali' }
+
+    const { error } = await supabase
+      .from('institution_notes')
+      .upsert(
+        {
+          institution_id: institutionId,
+          note,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'institution_id' }
+      )
+
+    if (error) throw new Error(error.message)
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error upserting institution note:', error)
+    return { success: false, error: error.message || 'Gagal menyimpan catatan institusi' }
+  }
+}
+
