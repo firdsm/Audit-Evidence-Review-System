@@ -248,8 +248,12 @@ export async function GET(request: NextRequest) {
         for (const doc of sortedDocs) {
           rowNo++
           const review = docReviews.find((r) => r.document_id === doc.id)
-          const status = review?.checked ? 'OK' : 'Tidak ada'
           const catatan = review?.note ?? ''
+          const status = review?.checked
+            ? 'OK'
+            : catatan.length > 0
+              ? 'Ada Catatan'
+              : 'Tidak ada'
 
           const row = ws.addRow([
             rowNo,
@@ -359,6 +363,8 @@ function styleDataRow(
       const val = String(cell.value ?? '')
       if (val === 'OK') {
         cell.font = { name: 'Calibri', size: 10.5, color: GREEN, bold: true }
+      } else if (val === 'Ada Catatan') {
+        cell.font = { name: 'Calibri', size: 10.5, color: { argb: 'FF8B6914' }, bold: true }
       } else {
         cell.font = { name: 'Calibri', size: 10.5, color: GREY }
       }
