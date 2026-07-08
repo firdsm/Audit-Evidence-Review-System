@@ -72,24 +72,37 @@ export default async function AuditPage({ params }: PageProps) {
     ),
   }))
 
-  // 4. Fetch existing assessments for this institution, including document reviews
-  const { data: assessments, error: assessError } = await supabase
-    .from('assessments')
-    .select(`
-      id,
-      indicator_id,
-      score,
-      document_reviews (
+  // 4. Fetch assessments + institution note in parallel
+  const [
+    { data: assessments, error: assessError },
+    { data: noteRow, error: noteError },
+  ] = await Promise.all([
+    supabase
+      .from('assessments')
+      .select(`
         id,
-        document_id,
-        checked,
-        note
-      )
-    `)
-    .eq('institution_id', institutionId)
+        indicator_id,
+        score,
+        document_reviews (
+          id,
+          document_id,
+          checked,
+          note
+        )
+      `)
+      .eq('institution_id', institutionId),
+    supabase
+      .from('institution_notes')
+      .select('note')
+      .eq('institution_id', institutionId)
+      .maybeSingle(),
+  ])
 
   if (assessError) {
     console.error('Error fetching assessments:', assessError)
+  }
+  if (noteError) {
+    console.error('Error fetching institution note:', noteError)
   }
 
   return (
@@ -97,6 +110,7 @@ export default async function AuditPage({ params }: PageProps) {
       institution={institution}
       aspects={formattedAspects}
       initialAssessments={assessments || []}
+      initialNote={noteRow?.note ?? null}
       isSuperAdmin={isSuperAdmin}
       globalDebugMode={globalDebugMode}
     />

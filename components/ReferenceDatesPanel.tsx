@@ -2,36 +2,30 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { NotebookPen, X } from 'lucide-react'
-import { getInstitutionNoteAction, upsertInstitutionNoteAction } from '@/app/audit/actions'
+import { upsertInstitutionNoteAction } from '@/app/audit/actions'
 
 interface ReferenceDatesPanelProps {
   institutionId: string
+  initialNote: string | null
 }
 
-export default function ReferenceDatesPanel({ institutionId }: ReferenceDatesPanelProps) {
+export default function ReferenceDatesPanel({
+  institutionId,
+  initialNote,
+}: ReferenceDatesPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [note, setNote] = useState('')
-  const [loading, setLoading] = useState(false)
+  // Initialise from prefetched prop — no fetch needed on open
+  const [note, setNote] = useState(initialNote ?? '')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [saveError, setSaveError] = useState('')
 
   const panelRef = useRef<HTMLDivElement>(null)
   const saveStatusTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load note when panel opens
+  // Sync note if institution changes (e.g. navigating between institutions)
   useEffect(() => {
-    if (!isOpen) return
-
-    setLoading(true)
-    setSaveStatus('idle')
-
-    getInstitutionNoteAction(institutionId).then((res) => {
-      setLoading(false)
-      if (res.success && res.data) {
-        setNote(res.data.note ?? '')
-      }
-    })
-  }, [isOpen, institutionId])
+    setNote(initialNote ?? '')
+  }, [initialNote])
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -102,33 +96,23 @@ export default function ReferenceDatesPanel({ institutionId }: ReferenceDatesPan
             </button>
           </div>
 
-          {/* Body */}
+          {/* Body — textarea always ready, no loading state */}
           <div className="p-4">
-            {loading ? (
-              <div className="flex items-center justify-center py-8 gap-2 text-zinc-500">
-                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <span className="text-xs">Memuat...</span>
-              </div>
-            ) : (
-              <textarea
-                id="institution-note-textarea"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                onBlur={(e) => handleBlur(e.target.value)}
-                placeholder="Tulis catatan referensi untuk institusi ini..."
-                rows={7}
-                className="
-                  w-full px-3 py-2.5 rounded-xl border border-zinc-700
-                  bg-zinc-950 text-white text-xs leading-relaxed
-                  focus:outline-none focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500/60
-                  transition-all resize-none placeholder-zinc-600
-                  min-h-[120px]
-                "
-              />
-            )}
+            <textarea
+              id="institution-note-textarea"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onBlur={(e) => handleBlur(e.target.value)}
+              placeholder="Tulis catatan referensi untuk institusi ini..."
+              rows={7}
+              className="
+                w-full px-3 py-2.5 rounded-xl border border-zinc-700
+                bg-zinc-950 text-white text-xs leading-relaxed
+                focus:outline-none focus:ring-1 focus:ring-violet-500/50 focus:border-violet-500/60
+                transition-all resize-none placeholder-zinc-600
+                min-h-[120px]
+              "
+            />
           </div>
 
           {/* Footer — save status */}
@@ -158,7 +142,7 @@ export default function ReferenceDatesPanel({ institutionId }: ReferenceDatesPan
       {/* ── FAB Button ─────────────────────────────────────────────────── */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={isOpen ? 'Tutup catatan referensi' : 'Buka catatan referensi institusi'}
+        aria-label={isOpen ? 'Tutup catatan' : 'Buka catatan institusi'}
         aria-expanded={isOpen}
         className={`
           w-14 h-14 rounded-full flex items-center justify-center

@@ -78,6 +78,7 @@ interface AuditClientProps {
   }
   aspects: Aspect[]
   initialAssessments: Assessment[]
+  initialNote: string | null
   isSuperAdmin?: boolean
   globalDebugMode?: boolean
 }
@@ -97,6 +98,7 @@ export default function AuditClient({
   institution,
   aspects,
   initialAssessments,
+  initialNote,
   isSuperAdmin = false,
   globalDebugMode = false,
 }: AuditClientProps) {
@@ -1044,7 +1046,7 @@ export default function AuditClient({
       </div>
 
       {/* Floating Reference Dates Panel */}
-      <ReferenceDatesPanel institutionId={institution.id} />
+      <ReferenceDatesPanel institutionId={institution.id} initialNote={initialNote} />
     </div>
   )
 }
