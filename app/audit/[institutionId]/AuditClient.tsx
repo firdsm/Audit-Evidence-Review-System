@@ -110,6 +110,7 @@ export default function AuditClient({
   const [assessments, setAssessments] = useState<Assessment[]>(initialAssessments)
 
   // Active indicator form state
+  const [activeTab, setActiveTab] = useState<'indicators' | 'files' | 'form'>('form')
   const [score, setScore] = useState<number | null>(null)
   const [documentReviews, setDocumentReviews] = useState<DocumentReview[]>([])
   // Track which doc rows have expanded note textareas
@@ -339,7 +340,7 @@ export default function AuditClient({
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(120,119,198,0.05),transparent_50%)]" />
 
       {/* Header Bar */}
-      <header className="relative z-10 border-b border-zinc-800 bg-zinc-900/40 backdrop-blur-md px-6 py-4 flex justify-between items-center shrink-0">
+      <header className="relative z-10 border-b border-zinc-800 bg-zinc-900/40 backdrop-blur-md px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="text-zinc-400 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,20 +348,20 @@ export default function AuditClient({
             </svg>
           </Link>
           <div>
-            <h1 className="text-lg font-bold text-white leading-tight">{institution.name}</h1>
-            <p className="text-xs text-zinc-400">
+            <h1 className="text-base sm:text-lg font-bold text-white leading-tight">{institution.name}</h1>
+            <p className="text-[10px] sm:text-xs text-zinc-400">
               Kategori: <span className="text-blue-500 font-semibold">{institution.category}</span>
             </p>
           </div>
         </div>
 
         {/* Global Save Indicator and Export Buttons */}
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between md:justify-end gap-3 sm:gap-4 text-xs sm:text-sm">
+          <div className="flex flex-wrap items-center gap-2">
             <FullscreenButton />
             <button
               onClick={exportHasilAudit}
-              className="px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
+              className="px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
               title="Ekspor Hasil Penilaian ke Excel (Template)"
             >
               <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,7 +371,7 @@ export default function AuditClient({
             </button>
             <button
               onClick={exportTemuan}
-              className="px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
+              className="px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
               title="Ekspor Pengecekan Dokumen Dukung ke Excel"
             >
               <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,7 +382,7 @@ export default function AuditClient({
           </div>
 
           {saveStatus === 'saving' && (
-            <span className="text-zinc-400 flex items-center gap-1.5 font-medium">
+            <span className="text-zinc-400 flex items-center gap-1.5 font-medium whitespace-nowrap">
               <svg className="animate-spin h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -390,12 +391,12 @@ export default function AuditClient({
             </span>
           )}
           {saveStatus === 'saved' && (
-            <span className="text-green-500 flex items-center gap-1 font-semibold">
+            <span className="text-green-500 flex items-center gap-1 font-semibold whitespace-nowrap">
               ✓ Tersimpan
             </span>
           )}
           {saveStatus === 'error' && (
-            <span className="text-red-500 font-semibold">
+            <span className="text-red-500 font-semibold whitespace-nowrap">
               ⚠ Gagal: {errorMessage}
             </span>
           )}
@@ -403,10 +404,50 @@ export default function AuditClient({
       </header>
 
       {/* 3-Panel Content Area */}
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      {/* Mobile Tab Navigation */}
+      <div className="lg:hidden relative z-10 border-b border-zinc-800 bg-zinc-900/60 flex shrink-0 select-none">
+        <button
+          onClick={() => setActiveTab('indicators')}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all ${
+            activeTab === 'indicators'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Indikator
+        </button>
+        <button
+          onClick={() => setActiveTab('files')}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'files'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Berkas Bukti
+          {files.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-[10px] text-zinc-400 border border-zinc-700">
+              {files.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('form')}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all ${
+            activeTab === 'form'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Form Penilaian
+        </button>
+      </div>
+
+      {/* 3-Panel Content Area */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-10">
 
         {/* PANEL KIRI: Aspects & Indicators */}
-        <aside className="w-80 border-r border-zinc-800 bg-zinc-900/10 flex flex-col overflow-hidden shrink-0 select-none">
+        <aside className={`${activeTab === 'indicators' ? 'flex-1 w-full' : 'hidden'} lg:flex-none lg:w-80 border-r border-zinc-800 bg-zinc-900/10 flex flex-col overflow-hidden lg:shrink-0 select-none`}>
           <div className="p-4 border-b border-zinc-800 bg-zinc-900/20 shrink-0">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Daftar Indikator Penilaian</span>
           </div>
@@ -426,8 +467,11 @@ export default function AuditClient({
                     return (
                       <button
                         key={ind.id}
-                        onClick={() => setActiveIndicator(ind)}
-                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition-all flex justify-between items-start gap-2 ${
+                        onClick={() => {
+                          setActiveIndicator(ind)
+                          setActiveTab('form')
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-xl text-xs font-medium transition-all flex justify-between items-start gap-2 ${
                           active
                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/15'
                             : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
@@ -454,8 +498,8 @@ export default function AuditClient({
         </aside>
 
         {/* PANEL TENGAH: Google Drive Evidence Preview */}
-        <section className="flex-1 flex flex-col bg-zinc-900/5 overflow-hidden border-r border-zinc-800">
-          <div className="p-4 border-b border-zinc-800 bg-zinc-900/20 flex justify-between items-center shrink-0">
+        <section className={`${activeTab === 'files' ? 'flex-1 w-full' : 'hidden'} lg:flex-1 flex flex-col bg-zinc-900/5 overflow-hidden border-r border-zinc-800`}>
+          <div className={`p-4 border-b border-zinc-800 bg-zinc-900/20 ${activeFile ? 'hidden' : 'flex'} justify-between items-center shrink-0`}>
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Berkas Bukti (Google Drive)</span>
             <div className="flex items-center gap-2">
               {folderExists && (
@@ -569,7 +613,7 @@ export default function AuditClient({
           )}
 
           {/* Top Banner Warning for missing folder */}
-          {!folderExists && (
+          {!folderExists && !activeFile && (
             <div className="p-4 bg-zinc-900/60 border-b border-zinc-850 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
               <div className="flex items-start gap-2.5">
                 <span className="shrink-0 mt-0.5 text-zinc-400">
@@ -599,7 +643,7 @@ export default function AuditClient({
           )}
 
           {/* Scan recursion limit reached banner */}
-          {scanLimitReached && (
+          {scanLimitReached && !activeFile && (
             <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-500 text-xs flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <svg className="w-4.5 h-4.5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -620,7 +664,7 @@ export default function AuditClient({
 
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             {/* Sidebar file list */}
-            <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-zinc-800 bg-zinc-900/10 flex flex-col overflow-y-auto shrink-0">
+            <div className={`w-full md:w-64 border-b md:border-b-0 md:border-r border-zinc-800 bg-zinc-900/10 ${activeFile ? 'hidden' : 'flex'} flex-col overflow-y-auto shrink-0`}>
               {filesLoading ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 gap-2 text-zinc-500">
                   <svg className="animate-spin h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24">
@@ -662,7 +706,7 @@ export default function AuditClient({
                             setLoadingFileId(null)
                           }
                         }}
-                        className={`w-full text-left p-2.5 rounded-xl transition-all text-xs flex items-start gap-2.5 ${
+                        className={`w-full text-left p-3.5 md:p-2.5 rounded-xl transition-all text-xs flex items-start gap-2.5 ${
                           isActive
                             ? 'bg-zinc-800 border border-zinc-700 text-white'
                             : 'border border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
@@ -708,7 +752,7 @@ export default function AuditClient({
             </div>
 
             {/* Document preview viewport */}
-            <div className="flex-1 bg-zinc-950 p-4 flex flex-col justify-between overflow-y-auto min-h-[300px]">
+            <div className={`flex-1 bg-zinc-950 p-4 ${activeFile ? 'flex' : 'hidden md:flex'} flex-col justify-between overflow-y-auto min-h-[300px]`}>
               {activeFile ? (
                 <div className="flex-1 flex flex-col overflow-hidden space-y-4">
                   {/* Preview Area */}
@@ -758,24 +802,18 @@ export default function AuditClient({
                       </div>
                     )}
                   </div>
-
-                  {/* Actions for PDF/Images */}
-                  {(activeFile.mimeType === 'application/pdf' || activeFile.mimeType.startsWith('image/')) && (
-                    <div className="flex justify-between items-center text-xs px-2 shrink-0">
-                      <span className="text-zinc-500 font-mono">Format: {activeFile.mimeType}</span>
-                      <a
-                        href={activeFile.webViewLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline flex items-center gap-1 font-semibold"
-                      >
-                        Buka di Google Drive Tab Baru
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    </div>
-                  )}
+                  {/* Footer Back Button */}
+                  <div className="pt-2 flex justify-center shrink-0">
+                    <button
+                      onClick={() => setActiveFile(null)}
+                      className="px-6 py-2.5 bg-zinc-850 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 cursor-pointer transition-all shadow-lg"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span>Kembali ke Daftar Berkas</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-zinc-500 space-y-2">
@@ -797,7 +835,7 @@ export default function AuditClient({
         </section>
 
         {/* PANEL KANAN: Form Penilaian Audit (Auto-Save) */}
-        <main className="w-96 bg-zinc-900/10 flex flex-col overflow-y-auto shrink-0 select-none">
+        <main className={`${activeTab === 'form' ? 'flex-1 w-full' : 'hidden'} lg:flex-none lg:w-96 bg-zinc-900/10 flex flex-col overflow-y-auto lg:shrink-0 select-none`}>
           {activeIndicator ? (
             <>
               {/* Active Indicator Title */}
@@ -817,7 +855,7 @@ export default function AuditClient({
                     Nilai kepatuhan
                   </p>
 
-                  <div className="flex flex-col gap-[6px]">
+                  <div className="flex flex-col gap-2.5">
                     {(() => {
                       const scales =
                         activeIndicator?.scoring_scale && activeIndicator.scoring_scale.length > 0
@@ -856,12 +894,12 @@ export default function AuditClient({
                             key={item.score}
                             type="button"
                             onClick={() => handleScoreChange(item.score)}
-                            className={`flex items-center gap-[10px] p-[8px_10px] rounded-xl border transition-all text-left cursor-pointer ${rowClass}`}
+                            className={`flex items-center gap-3 p-3.5 sm:p-2.5 min-h-[44px] rounded-xl border transition-all text-left cursor-pointer ${rowClass}`}
                           >
-                            <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-[13px] font-medium ${badgeClass}`}>
+                            <div className={`w-8 h-8 sm:w-7 sm:h-7 flex-shrink-0 flex items-center justify-center rounded-lg text-sm sm:text-[13px] font-semibold ${badgeClass}`}>
                               {item.score}
                             </div>
-                            <p className={`text-xs leading-[1.4] m-0 ${textClass}`}>
+                            <p className={`text-xs sm:text-[11px] md:text-xs leading-normal m-0 ${textClass}`}>
                               {item.description}
                             </p>
                           </button>
@@ -902,25 +940,26 @@ export default function AuditClient({
                             className="rounded-xl overflow-hidden transition-all"
                           >
                             {/* Doc row */}
-                            <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isChecked ? 'bg-emerald-500/5' : 'hover:bg-zinc-900/60'}`}>
+                            <div className={`flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl transition-all ${isChecked ? 'bg-emerald-500/5' : 'hover:bg-zinc-900/60'}`}>
                               {/* Checkbox */}
                               <button
                                 type="button"
                                 onClick={() => handleDocChecked(docDef.id, !isChecked)}
-                                className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${
+                                className={`shrink-0 w-6 h-6 sm:w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${
                                   isChecked
                                     ? 'bg-emerald-500 border-emerald-500'
                                     : 'border-zinc-600 hover:border-zinc-400 bg-transparent'
                                 }`}
                                 aria-label={isChecked ? 'Batalkan tanda periksa' : 'Tandai sudah diperiksa'}
                               >
-                                {isChecked && <Check size={11} strokeWidth={3} className="text-white" />}
+                                {isChecked && <Check size={12} strokeWidth={3} className="text-white" />}
                               </button>
 
                               {/* Doc name */}
                               <span
-                                className={`flex-1 text-xs leading-snug transition-colors ${
-                                  isChecked ? 'text-zinc-300 line-through decoration-zinc-600' : 'text-zinc-300'
+                                onClick={() => handleDocChecked(docDef.id, !isChecked)}
+                                className={`flex-1 text-xs leading-snug cursor-pointer select-none py-1 transition-colors ${
+                                  isChecked ? 'text-zinc-400 line-through decoration-zinc-600' : 'text-zinc-300 hover:text-white'
                                 }`}
                               >
                                 {docDef.name}
@@ -930,7 +969,7 @@ export default function AuditClient({
                               <button
                                 type="button"
                                 onClick={() => toggleNoteExpanded(docDef.id)}
-                                className={`shrink-0 p-1 rounded-lg transition-all cursor-pointer ${
+                                className={`shrink-0 p-2 sm:p-1 rounded-lg transition-all cursor-pointer ${
                                   hasNote
                                     ? 'text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20'
                                     : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800'
@@ -939,7 +978,7 @@ export default function AuditClient({
                                 aria-label={hasNote ? 'Lihat catatan' : 'Tambah catatan'}
                               >
                                 <MessageCircle
-                                size={13}
+                                size={14}
                                 className={hasNote ? 'fill-current' : ''}
                               />
                               </button>
