@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import UserDropdown from '@/components/UserDropdown'
 import FullscreenButton from '@/components/FullscreenButton'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 
 interface InstitutionData {
   id: string
@@ -145,6 +146,9 @@ export default function DashboardClient({
           </div>
         </div>
       </nav>
+
+      {/* ANNOUNCEMENT BANNER */}
+      <AnnouncementBanner page="dashboard" />
 
       {/* ─────────────────────────────────────────────────────────────────────
           Main content — semua di sini scroll normal kecuali filter bar

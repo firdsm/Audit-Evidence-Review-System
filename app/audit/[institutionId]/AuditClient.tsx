@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import { getEvidenceFilesAction, saveAssessmentAction, DocumentReviewInput } from '../actions'
 import FullscreenButton from '@/components/FullscreenButton'
 import ReferenceDatesPanel from '@/components/ReferenceDatesPanel'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 import indicatorGuidance from '@/indicator-guidance.json'
 
 // Types from JSON guidance
@@ -408,6 +409,9 @@ export default function AuditClient({
           )}
         </div>
       </header>
+
+      {/* ANNOUNCEMENT BANNER */}
+      <AnnouncementBanner page="audit" />
 
       {/* 3-Panel Content Area */}
       {/* Mobile Tab Navigation */}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useTransition, useMemo } from 'react'
 import Link from 'next/link'
 import UserDropdown from '@/components/UserDropdown'
 import FullscreenButton from '@/components/FullscreenButton'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 
 interface RankingsClientProps {
   userEmail: string
@@ -404,6 +405,9 @@ export default function RankingsClient({
           </div>
         </div>
       </nav>
+
+      {/* ANNOUNCEMENT BANNER */}
+      <AnnouncementBanner page="hasil_penilaian" />
 
       {/* MAIN CONTAINER */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 pt-8 pb-20 space-y-6">
