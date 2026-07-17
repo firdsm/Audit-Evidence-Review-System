@@ -250,6 +250,55 @@ export async function setActiveWeightConfiguration(configId: string): Promise<Ac
 
   const supabase = await createClient()
 
+  // ── Pre-flight validation ───────────────────────────────────────────────
+  // 1. Check aspect weights sum to 100
+  const { data: aw, error: awFetchErr } = await supabase
+    .from('aspect_weights')
+    .select('aspect_id, weight')
+    .eq('weight_configuration_id', configId)
+
+  if (awFetchErr) return { success: false, error: awFetchErr.message }
+
+  const totalAspect = (aw || []).reduce((s, r) => s + parseFloat(r.weight), 0)
+  if (Math.round(totalAspect) !== 100) {
+    return {
+      success: false,
+      error: `Total bobot aspek harus 100% (saat ini ${totalAspect}%).`,
+    }
+  }
+
+  // 2. For each aspect check that its indicator weights sum to 100
+  const { data: aspects } = await supabase.from('aspects').select('id, name, order_number')
+  const { data: iw } = await supabase
+    .from('indicator_weights')
+    .select('indicator_id, weight')
+    .eq('weight_configuration_id', configId)
+
+  const { data: indicators } = await supabase
+    .from('indicators')
+    .select('id, aspect_id')
+
+  const invalidAspects: string[] = []
+  for (const aspect of aspects || []) {
+    const aspIndIds = new Set(
+      (indicators || []).filter((i) => i.aspect_id === aspect.id).map((i) => i.id)
+    )
+    const total = (iw || [])
+      .filter((w) => aspIndIds.has(w.indicator_id))
+      .reduce((s, w) => s + parseFloat(w.weight), 0)
+    if (Math.round(total) !== 100) {
+      invalidAspects.push(`Aspek ${aspect.order_number} (${aspect.name}): ${total}%`)
+    }
+  }
+
+  if (invalidAspects.length > 0) {
+    return {
+      success: false,
+      error: `Total bobot indikator harus 100% untuk setiap aspek. Belum valid: ${invalidAspects.join('; ')}.`,
+    }
+  }
+  // ── End validation ───────────────────────────────────────────────────────
+
   // Set all to false first to avoid breaking unique index
   const { error: resetError } = await supabase
     .from('weight_configurations')

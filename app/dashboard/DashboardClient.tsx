@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import UserDropdown from '@/components/UserDropdown'
 import FullscreenButton from '@/components/FullscreenButton'
 
@@ -106,13 +107,31 @@ export default function DashboardClient({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-                AERS
-              </span>
-              <span className="hidden md:inline text-xs text-zinc-500 ml-2 border-l border-zinc-800 pl-2">
-                Audit Evidence Review System
-              </span>
+            <div className="flex flex-col">
+              <div className="flex items-center">
+                <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+                  AERS
+                </span>
+                <span className="hidden md:inline text-xs text-zinc-500 ml-2 border-l border-zinc-800 pl-2">
+                  Audit Evidence Review System
+                </span>
+              </div>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="ml-8 flex items-center gap-6">
+              <Link
+                href="/dashboard"
+                className="text-xs font-semibold text-white transition-colors duration-200"
+              >
+                Daftar Instansi
+              </Link>
+              <Link
+                href="/hasil-penilaian"
+                className="text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors duration-200"
+              >
+                Hasil Penilaian
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-3">

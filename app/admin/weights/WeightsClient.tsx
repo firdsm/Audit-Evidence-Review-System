@@ -125,9 +125,7 @@ export default function WeightsClient() {
     }
   }
 
-  // Calculate totals
-  const totalAspectWeight = Object.values(aspectWeights).reduce((sum, w) => sum + (w || 0), 0)
-
+  // Helper functions (must be declared before derived constants that call them)
   const getIndicatorsForAspect = (aspectId: string) => {
     return indicators.filter((ind) => ind.aspect_id === aspectId)
   }
@@ -136,6 +134,15 @@ export default function WeightsClient() {
     const aspectInds = getIndicatorsForAspect(aspectId)
     return aspectInds.reduce((sum, ind) => sum + (indicatorWeights[ind.id] || 0), 0)
   }
+
+  // Calculate totals
+  const totalAspectWeight = Object.values(aspectWeights).reduce((sum, w) => sum + (w || 0), 0)
+
+  // Derived validation flags
+  const isAspectTotalValid = totalAspectWeight === 100
+  const invalidAspects = aspects.filter((a) => getAspectIndicatorTotalWeight(a.id) !== 100)
+  const allIndicatorGroupsValid = invalidAspects.length === 0
+  const canActivate = isAspectTotalValid && allIndicatorGroupsValid
 
   // Actions
   async function handleCreateConfig(e: React.FormEvent) {
@@ -287,14 +294,32 @@ export default function WeightsClient() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col items-end gap-2">
                 {!config.is_active && (
-                  <button
-                    onClick={() => setShowActiveModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-violet-500/15 transition-all cursor-pointer"
-                  >
-                    Jadikan Aktif
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowActiveModal(true)}
+                      disabled={!canActivate || saving}
+                      title={
+                        !canActivate
+                          ? 'Bobot belum valid — pastikan semua total bobot berjumlah 100% sebelum mengaktifkan'
+                          : 'Jadikan konfigurasi ini aktif'
+                      }
+                      className={
+                        canActivate && !saving
+                          ? 'px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-violet-500/15 transition-all cursor-pointer'
+                          : 'px-4 py-2 bg-zinc-800 text-zinc-500 border border-zinc-700/40 text-xs font-bold rounded-xl cursor-not-allowed opacity-60'
+                      }
+                    >
+                      Jadikan Aktif
+                    </button>
+                    {!canActivate && (
+                      <p className="text-[10px] text-red-400 text-right max-w-[200px] leading-tight">
+                        {!isAspectTotalValid && `Bobot aspek: ${totalAspectWeight}% (harus 100%). `}
+                        {!allIndicatorGroupsValid && `${invalidAspects.length} aspek memiliki total bobot indikator ≠ 100%.`}
+                      </p>
+                    )}
+                  </>
                 )}
 
                 <button
