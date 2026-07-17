@@ -56,6 +56,10 @@ export default function WeightsClient() {
   const [aspectWeights, setAspectWeights] = useState<Record<string, number>>({})
   const [indicatorWeights, setIndicatorWeights] = useState<Record<string, number>>({})
 
+  // Ratio state (stored as 0-100 for UI display, converted to 0-1 when saving)
+  const [f02RatioPct, setF02RatioPct] = useState<number>(75)
+  const [f03RatioPct, setF03RatioPct] = useState<number>(25)
+
   // New configuration dialog state
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newYear, setNewYear] = useState<number>(new Date().getFullYear())
@@ -108,6 +112,12 @@ export default function WeightsClient() {
       setAspects(aspects)
       setIndicators(indicators)
 
+      // Load ratio values (DB stores as 0-1, UI shows as 0-100) Safely handle Null/NaN
+      const dbF02 = parseFloat(config.f02_ratio)
+      const dbF03 = parseFloat(config.f03_ratio)
+      setF02RatioPct(isNaN(dbF02) ? 75 : Math.round(dbF02 * 100))
+      setF03RatioPct(isNaN(dbF03) ? 25 : Math.round(dbF03 * 100))
+
       // Map weights to states
       const awMap: Record<string, number> = {}
       aspects.forEach((a: Aspect) => {
@@ -137,12 +147,14 @@ export default function WeightsClient() {
 
   // Calculate totals
   const totalAspectWeight = Object.values(aspectWeights).reduce((sum, w) => sum + (w || 0), 0)
+  const totalRatioPct = f02RatioPct + f03RatioPct
 
   // Derived validation flags
   const isAspectTotalValid = totalAspectWeight === 100
+  const isRatioValid = totalRatioPct === 100
   const invalidAspects = aspects.filter((a) => getAspectIndicatorTotalWeight(a.id) !== 100)
   const allIndicatorGroupsValid = invalidAspects.length === 0
-  const canActivate = isAspectTotalValid && allIndicatorGroupsValid
+  const canActivate = isAspectTotalValid && allIndicatorGroupsValid && isRatioValid
 
   // Actions
   async function handleCreateConfig(e: React.FormEvent) {
@@ -175,7 +187,13 @@ export default function WeightsClient() {
       weight,
     }))
 
-    const res = await updateWeights(config.id, awList, iwList)
+    const res = await updateWeights(
+      config.id,
+      awList,
+      iwList,
+      f02RatioPct / 100,
+      f03RatioPct / 100
+    )
     setSaving(false)
 
     if (res.success) {
@@ -314,7 +332,8 @@ export default function WeightsClient() {
                       Jadikan Aktif
                     </button>
                     {!canActivate && (
-                      <p className="text-[10px] text-red-400 text-right max-w-[200px] leading-tight">
+                      <p className="text-[10px] text-red-400 text-right max-w-[220px] leading-tight">
+                        {!isRatioValid && `Rasio F-02 + F-03: ${totalRatioPct}% (harus 100%). `}
                         {!isAspectTotalValid && `Bobot aspek: ${totalAspectWeight}% (harus 100%). `}
                         {!allIndicatorGroupsValid && `${invalidAspects.length} aspek memiliki total bobot indikator ≠ 100%.`}
                       </p>
@@ -495,6 +514,98 @@ export default function WeightsClient() {
                   </div>
                 )
               })}
+            </div>
+
+            {/* SECTION 3: Rasio Nilai Akhir (F-02 vs F-03) */}
+            <div className="bg-emerald-950/10 border border-emerald-900/25 rounded-2xl p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-emerald-900/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-600/15 border border-emerald-600/20 flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-emerald-200 tracking-tight">Rasio Nilai Akhir</h2>
+                    <p className="text-[11px] text-emerald-400/60">Proporsi F-02 dan F-03 dalam menentukan Nilai Akhir institusi.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-zinc-400">Total:</span>
+                  <span
+                    className={`text-sm font-extrabold px-2.5 py-0.5 rounded-lg border ${
+                      isRatioValid
+                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                        : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                    }`}
+                  >
+                    {totalRatioPct}%
+                  </span>
+                </div>
+              </div>
+
+              {!isRatioValid && (
+                <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl flex items-start gap-2.5 text-xs text-amber-400">
+                  <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>Total rasio saat ini {totalRatioPct}%. Harus berjumlah 100%.</span>
+                </div>
+              )}
+
+              <div className="divide-y divide-emerald-900/20">
+                {/* F-02 Row */}
+                <div className="flex items-center justify-between py-3.5 first:pt-1 gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-zinc-200 font-medium">F-02 — Skor Tertimbang Indikator</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Hasil kalkulasi bobot aspek &amp; indikator.</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={f02RatioPct}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(100, parseInt(e.target.value) || 0))
+                        setF02RatioPct(val)
+                        setF03RatioPct(100 - val)
+                      }}
+                      className="w-20 h-10 bg-zinc-950 border border-emerald-900/40 rounded-xl text-center px-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50"
+                    />
+                    <span className="text-xs text-zinc-500 w-4">%</span>
+                  </div>
+                </div>
+
+                {/* F-03 Row */}
+                <div className="flex items-center justify-between py-3.5 last:pb-1 gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-zinc-200 font-medium">F-03 — Skor Manual Superadmin</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Nilai F-03 yang diinput secara manual.</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={f03RatioPct}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(100, parseInt(e.target.value) || 0))
+                        setF03RatioPct(val)
+                        setF02RatioPct(100 - val)
+                      }}
+                      className="w-20 h-10 bg-zinc-950 border border-emerald-900/40 rounded-xl text-center px-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50"
+                    />
+                    <span className="text-xs text-zinc-500 w-4">%</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-zinc-600 pt-1">
+                Nilai Akhir = ({f02RatioPct}% × F-02) + ({f03RatioPct}% × F-03)
+              </p>
             </div>
 
             {/* Bottom Save Action Panel */}

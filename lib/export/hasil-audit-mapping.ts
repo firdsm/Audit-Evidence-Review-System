@@ -11,6 +11,9 @@ export const CELL_NAMA_INSTANSI = 'B2' // ← sesuaikan dengan template Anda
 // Cell untuk link Google Drive folder root institusi
 export const CELL_LINK_DRIVE = 'E8' // ← sesuaikan dengan template Anda
 
+// Cell untuk total nilai F-03 institusi
+export const CELL_F03_SCORE = 'J6'
+
 // Nama worksheet di template (biasanya 'Sheet1')
 export const TEMPLATE_SHEET_NAME = 'Kertas Kerja' // ← sesuaikan jika nama sheet berbeda
 

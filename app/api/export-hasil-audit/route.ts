@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import {
   CELL_NAMA_INSTANSI,
   CELL_LINK_DRIVE,
+  CELL_F03_SCORE,
   TEMPLATE_SHEET_NAME,
   INDICATOR_SCORE_MAPPING,
 } from '@/lib/export/hasil-audit-mapping'
@@ -34,17 +35,34 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 2. Fetch institution details
-    const { data: institution, error: instError } = await supabase
-      .from('institutions')
-      .select('id, name, category, drive_folder_id')
-      .eq('id', institutionId)
-      .single()
+    // 2. Fetch institution details and F-03 score in parallel
+    const [
+      { data: institution, error: instError },
+      { data: f03Row, error: f03Error },
+    ] = await Promise.all([
+      supabase
+        .from('institutions')
+        .select('id, name, category, drive_folder_id')
+        .eq('id', institutionId)
+        .single(),
+      supabase
+        .from('f03_scores')
+        .select('score')
+        .eq('institution_id', institutionId)
+        .maybeSingle(),
+    ])
 
     if (instError || !institution) {
       return NextResponse.json(
         { error: 'Institusi tidak ditemukan' },
         { status: 404 }
+      )
+    }
+
+    if (f03Error) {
+      return NextResponse.json(
+        { error: 'Gagal memuat data F-03' },
+        { status: 500 }
       )
     }
 
@@ -115,6 +133,11 @@ export async function GET(request: NextRequest) {
       } as ExcelJS.CellHyperlinkValue
     }
     // If drive_folder_id is null, leave the cell empty (don't write anything)
+
+    // 8.b Fill F-03 Score if available
+    if (f03Row && f03Row.score !== null && f03Row.score !== undefined) {
+      worksheet.getCell(CELL_F03_SCORE).value = Number(f03Row.score)
+    }
 
     // 9. Build lookup: indicator code → assessment score
     const codeToId = new Map(indicators.map((ind) => [ind.code, ind.id]))

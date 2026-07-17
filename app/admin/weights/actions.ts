@@ -195,12 +195,26 @@ export async function createWeightConfiguration(
 export async function updateWeights(
   configId: string,
   aspectWeights: { aspectId: string; weight: number }[],
-  indicatorWeights: { indicatorId: string; weight: number }[]
+  indicatorWeights: { indicatorId: string; weight: number }[],
+  f02Ratio?: number,
+  f03Ratio?: number
 ): Promise<ActionResponse> {
   const guard = await checkSuperAdmin()
   if (guard) return guard
 
   const supabase = await createClient()
+
+  // 0. Update ratio columns if provided
+  if (f02Ratio !== undefined && f03Ratio !== undefined) {
+    const { error: ratioError } = await supabase
+      .from('weight_configurations')
+      .update({ f02_ratio: f02Ratio, f03_ratio: f03Ratio })
+      .eq('id', configId)
+    if (ratioError) {
+      console.error('Error updating ratios:', ratioError)
+      return { success: false, error: ratioError.message }
+    }
+  }
 
   // 1. Bulk Upsert aspect weights
   if (aspectWeights.length > 0) {
@@ -251,6 +265,25 @@ export async function setActiveWeightConfiguration(configId: string): Promise<Ac
   const supabase = await createClient()
 
   // ── Pre-flight validation ───────────────────────────────────────────────
+  // 0. Check ratio columns sum to 1
+  const { data: cfgRatio, error: ratioFetchErr } = await supabase
+    .from('weight_configurations')
+    .select('f02_ratio, f03_ratio')
+    .eq('id', configId)
+    .single()
+
+  if (ratioFetchErr || !cfgRatio) {
+    return { success: false, error: 'Gagal membaca konfigurasi rasio.' }
+  }
+
+  const ratioSum = parseFloat(cfgRatio.f02_ratio) + parseFloat(cfgRatio.f03_ratio)
+  if (Math.abs(ratioSum - 1) > 0.001) {
+    return {
+      success: false,
+      error: `Rasio F-02 + F-03 harus berjumlah 100% (saat ini ${(ratioSum * 100).toFixed(1)}%).`,
+    }
+  }
+
   // 1. Check aspect weights sum to 100
   const { data: aw, error: awFetchErr } = await supabase
     .from('aspect_weights')
