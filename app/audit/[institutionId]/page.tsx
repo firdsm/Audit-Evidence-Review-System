@@ -55,7 +55,8 @@ export default async function AuditPage({ params }: PageProps) {
         name,
         order_number,
         scoring_scale,
-        required_documents
+        required_documents,
+        explanation
       )
     `)
     .order('order_number')

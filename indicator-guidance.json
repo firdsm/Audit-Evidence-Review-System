@@ -1,6 +1,7 @@
 [
     {
         "indicator_code": "IND-01",
+        "explanation": "Standar Pelayanan terdiri atas 14 komponen, dimana 6 diantaranya merupakan komponen service delivery, dan 8 komponen lainnya merupakan komponen manufacturing. Komponen service delivery wajib dipublikasikan pada media publikasi yang dimiliki Unit Lokus.",
         "scale": [
             {
                 "score": 0,
@@ -53,6 +54,7 @@
     },
     {
         "indicator_code": "IND-02",
+        "explanation": "- Penyusunan dan penetapan SP wajib melibatkan warga negara maupun penduduk sebagai orang perorangan, kelompok, maupun badan hukum yang berkedudukan sebagai penerima manfaat pelayanan publik, baik secara langsung maupun tidak langsung. Pihak terkait merupakan pihak yang dianggap kompeten dalam memberikan masukan terhadap penyusunan SP.\n\n- Masyarakat yang dilibatkan dalam penyusunan SP mewakili berbagai unsur dan profesi: (1) Masyarakat Pengguna Layanan, (2)Ahli/Praktisi/Akademisi, (3) Instansi Terkait, (4) Organisasi Masyarakat Sipil, dan (5) Media Massa.",
         "scale": [
             {
                 "score": 0,
@@ -126,6 +128,7 @@
     },
     {
         "indicator_code": "IND-03",
+        "explanation": "SP yang ditetapkan wajib dipublikasikan pada media publikasi yang tersedia, dan dapat diakses dengan mudah oleh masyarakat. Media publikasi tersebut dapat berupa:\n\n1. Media Cetak/Non Elektronik. Media yang termasuk di dalamnya yakni brosur, leaflet, majalah, pamflet, buku saku, papan pengumuman, dan sejenisnya.\n2. Media Elektronik. Media yang termasuk di dalamnya yakni TV, layar monitor, kios-K, link publikasi, dan sejenisnya.\n3. Media Sosial. Media yang termasuk di dalamnya yakni Facebook, Instagram, Twitter, WhatsApp, dan sejenisnya.\n4. Website. Media yang termasuk di dalamnya yakni website dan subsite.\n5. Aplikasi yang bisa diunduh, yaitu suatu aplikasi yang dikembangkan UPP yang dapat diunduh oleh pengguna layanan, baik berbasis Android, iOS, maupun OS lainnya.\n6. SIPP Nasional, yaitu suatu sistem nasional yang disediakan sebagai media publikasi dan informasi terkait pelayanan publik.",
         "scale": [
             {
                 "score": 0,
@@ -199,6 +202,7 @@
     },
     {
         "indicator_code": "IND-04",
+        "explanation": "Standar Pelayanan yang sudah ditetapkan wajib ditinjau ulang sesuai ketentuan Pasal 33 pada PP 96/2012, dan hasil peninjauan ulang dapat digunakan Unit Lokus sebagai dasar untuk tetap menjalankan SP yang sudah dibuat atau melakukan perubahan SP.",
         "scale": [
             {
                 "score": 0,
@@ -265,6 +269,7 @@
     },
     {
         "indicator_code": "IND-05",
+        "explanation": "Maklumat Pelayanan adalah pernyataan tertulis yang berisi keseluruhan rincian kewajiban dan janji pemberi layanan untuk memenuhi SP, serta kesiapan menerima sanksi bila melanggar sesuai dengan peraturan perundang-undangan. Hal-hal yang perlu dimuat dalam Maklumat Pelayanan adalah:\n\n1. Pernyataan janji dan kesanggupan untuk melaksanakan pelayanan sesuai dengan Standar Pelayanan.\n2. Pernyataan memberikan pelayanan sesuai dengan kewajiban dan akan melakukan perbaikan secara terus-menerus.\n3. Pernyataan kesediaan untuk menerima sanksi dan/atau memberikan kompensasi apabila pelayanan yang diberikan tidak sesuai dengan Standar Pelayanan.\n\nMaklumat Pelayanan dapat diakses melalui publikasi di:\n\n1. Media Cetak/Non-Elektronik. Media yang termasuk di dalamnya yakni brosur, leaflet, majalah, pamflet, buku saku, papan pengumuman, dan sejenisnya.\n2. Media Elektronik. Media yang termasuk di dalamnya yakni TV, layar monitor, kios-K, dan sejenisnya.",
         "scale": [
             {
                 "score": 0,
@@ -362,6 +367,7 @@
     },
     {
         "indicator_code": "IND-07",
+        "explanation": "Media Publikasi dapat diakses melalui:\n\n1. Media Cetak/Non-Elektronik. Media yang termasuk di dalamnya yakni brosur, leaflet, majalah, pamflet, buku saku, papan pengumuman, dan sejenisnya.\n2. Media Elektronik. Media yang termasuk di dalamnya yakni TV, layar monitor, kios-K, dan sejenisnya.\n3. Media Sosial. Media yang termasuk di dalamnya yakni Facebook, Instagram, Twitter, WhatsApp, dan sejenisnya.\n4. Website. Media yang termasuk di dalamnya yakni website dan subsite.\n5. Aplikasi yang bisa diunduh.",
         "scale": [
             {
                 "score": 0,
@@ -435,6 +441,7 @@
     },
     {
         "indicator_code": "IND-08",
+        "explanation": "Tindak lanjut Hasil SKM adalah hasil survei yang diolah dan dianalisis sehingga menghasilkan rekomendasi yang kemudian dijadikan referensi kebijakan perbaikan layanan. Hasil SKM seluruh jenis pelayanan dalam bentuk saran dan rekomendasi ditindaklanjuti serta dipergunakan sebagai acuan perbaikan layanan dan kebijakan layanan oleh pimpinan daerah maupun pimpinan penyelenggara.",
         "scale": [
             {
                 "score": 0,
@@ -480,6 +487,7 @@
     },
     {
         "indicator_code": "IND-09",
+        "explanation": "Kecepatan tindak lanjut rekomendasi hasil SKM digunakan untuk melihat keseriusan UPP dalam melaksanakan SKM. Apakah hasil SKM segera ditindaklanjuti atau tidak. Adapun kecepatan tindak lanjut ini dilihat dari laporan pelaksanaan SKM oleh unit pelayanan pada 2 tahun terakhir serta laporan tindak lanjutnya.",
         "scale": [
             {
                 "score": 0,
@@ -525,6 +533,7 @@
     },
     {
         "indicator_code": "IND-10",
+        "explanation": "Bentuk penyesuaian waktu pelayanan dapat berupa:\n\n1. Memiliki kebijakan jam pelayanan/kerja berupa surat keputusan, peraturan yang berlaku, dan sejenisnya.\n2. Tidak ada jeda pelayanan, sehingga istirahat pegawai dilakukan secara bergilir (shift), yang dapat dibuktikan melalui publikasi jam layanan kepada masyarakat.\n3. Penambahan waktu layanan di luar jam pelayanan yang telah ditentukan (masih pada hari kerja).\n4. Penambahan waktu layanan di luar hari kerja dalam kondisi tertentu (misalnya pembukaan CPNS atau pelaporan SPT Tahunan).\n5. Penambahan waktu layanan di luar hari kerja secara rutin.\n6. Layanan 24 Jam, yaitu layanan yang merupakan inti pelayanan dan pendaftaran. Tidak termasuk layanan konsultasi dan informasi.",
         "scale": [
             {
                 "score": 0,
@@ -591,6 +600,7 @@
     },
     {
         "indicator_code": "IND-11",
+        "explanation": "Aturan Perilaku dan Kode Etik Pelaksana Pelayanan adalah pedoman sikap, perilaku, perbuatan, tulisan, dan ucapan pegawai, serta hak dan kewajiban pelaksana layanan dalam menjalankan tugas-tugas pelayanan kepada pengguna layanan. Unsur Kode Etik meliputi: (1) hak dan kewajiban, (2) larangan KKN, (3) larangan diskriminasi, (4) sanksi, dan (5) penghargaan.",
         "scale": [
             {
                 "score": 0,
@@ -636,6 +646,7 @@
     },
     {
         "indicator_code": "IND-12",
+        "explanation": "Jenis mekanisme untuk meningkatkan motivasi kerja dapat berupa:\n\n1. Pemberian penghargaan.\n2. Pemberian kesempatan untuk mengikuti diklat.\n3. Pengembangan kapasitas melalui kesempatan mengikuti program beasiswa.\n4. Program konseling.\n5. Program tim/capacity building.\n6. Mekanisme lainnya yang dapat meningkatkan motivasi kerja pegawai.",
         "scale": [
             {
                 "score": 0,
@@ -716,6 +727,7 @@
     },
     {
         "indicator_code": "IND-13",
+        "explanation": "Dalam melaksanakan kegiatan pemberian penghargaan, terdapat kriteria tertentu yang digunakan unit layanan sebagai dasar pelaksanaan kegiatan. Kriteria pemberian penghargaan merupakan ukuran/indikator yang digunakan oleh UPP dalam menilai atau menentukan prestasi petugas pelayanan, yang dapat terdiri atas unsur-unsur berikut:\n\n1. Kehadiran.\n2. Kinerja, yaitu kualitas hasil kerja dalam menyelesaikan tugas sesuai dengan ketentuan yang diberikan atasan.\n3. Kerja sama.\n4. Inovatif/kreatif, yaitu kemampuan mengeluarkan ide.\n5. Penampilan, yaitu penggunaan atribut, pakaian, dan sebagainya yang telah ditetapkan.\n6. Tidak pernah menerima komplain dari pengguna layanan yang bersifat personal.",
         "scale": [
             {
                 "score": 0,
@@ -754,6 +766,7 @@
     },
     {
         "indicator_code": "IND-14",
+        "explanation": "- Seragam, yaitu pakaian/atribut yang membedakan petugas layanan dengan masyarakat atau pengguna layanan.\n- Identitas nama dapat berupa name tag, ID card, dan sejenisnya.\n- PIN/atribut/logo unit pelayanan merupakan berbagai atribut khas unit pelayanan yang dikenakan oleh pegawai, misalnya pin petugas pelayanan, selempang, dan sebagainya.\n- Aturan penerapan 5S, yaitu aturan atau kebijakan yang mengatur penerapan 5S oleh pegawai/petugas layanan.\n- Nilai-nilai budaya layanan dapat berupa slogan, motto, maskot, dan sebagainya.",
         "scale": [
             {
                 "score": 0,
@@ -827,6 +840,7 @@
     },
     {
         "indicator_code": "IND-15",
+        "explanation": "Fasilitas pendukung sebagai berikut:\n\n1. Ketersediaan parkir roda dua dan roda empat, yaitu terdapat pemisahan yang jelas antara kendaraan roda dua dan roda empat yang ditandai dengan marka.\n2. Petugas parkir, yaitu terdapat petugas yang berjaga di area parkir.\n3. Pemeriksaan karcis/kartu parkir, yaitu setiap pengunjung diberikan kartu/karcis sebagai bukti kepemilikan kendaraan yang digunakan.\n4. CCTV, yaitu lokasi parkir dilengkapi dengan CCTV yang aktif dan dipantau melalui monitor.\n5. Penitipan jaket/helm.\n6. Pelindung (kanopi atau atap berbahan lain).",
         "scale": [
             {
                 "score": 0,
@@ -907,6 +921,7 @@
     },
     {
         "indicator_code": "IND-16",
+        "explanation": "Fasilitas wajib adalah fasilitas minimal yang harus ada di ruang tunggu, meliputi (keduanya harus dipenuhi):\n\n1. Kursi tunggu.\n2. Pendingin/sirkulasi ruangan, yaitu tersedia pendingin ruangan berupa AC atau kipas angin, atau ruang tunggu memiliki sirkulasi udara yang baik.\n\nFasilitas pelengkap meliputi:\n\n1. Mesin antrean yang dilengkapi monitor, yaitu terdapat monitor/layar atau keterangan yang menjelaskan nomor antrean yang sedang dilayani.\n2. Televisi, yaitu ruang tunggu dilengkapi televisi yang menyala sebagai fasilitas bagi pengguna layanan yang sedang menunggu antrean.\n3. Bahan bacaan, yaitu tersedia bahan bacaan yang dapat digunakan pengguna layanan, seperti majalah, koran, buku, dan sebagainya.\n4. Pengisi daya baterai alat komunikasi (charger booth), yaitu tersedia sumber listrik yang dapat digunakan pengguna layanan untuk mengisi daya alat komunikasi.\n5. Hotspot/Wi-Fi, yaitu tersedia hotspot/Wi-Fi yang aktif dan dapat digunakan oleh pengguna layanan.\n6. Air minum, yaitu disediakan air minum bagi pengguna layanan, baik dalam kemasan maupun galon.\n7. Hal-hal lain yang mendukung kenyamanan ruang tunggu.",
         "scale": [
             {
                 "score": 0,
@@ -994,6 +1009,7 @@
     },
     {
         "indicator_code": "IND-17",
+        "explanation": "Kondisi toilet yang layak pakai meliputi:\n\n1. Ketersediaan toilet pria dan wanita, yaitu terdapat pemisahan antara toilet pria dan toilet wanita.\n2. Wastafel, yaitu tersedia wastafel dengan keran air yang berfungsi dengan baik.\n3. Toiletries, yaitu fasilitas penunjang di dalam toilet yang meliputi tisu, sabun, tempat sampah, dan sebagainya.\n4. Air bersih.\n5. Monitoring dan evaluasi (monev) terhadap intensitas petugas dalam membersihkan toilet.\n6. Fasilitas lain yang mendukung.",
         "scale": [
             {
                 "score": 0,
@@ -1675,6 +1691,7 @@
     },
     {
         "indicator_code": "IND-27",
+        "explanation": "- Arsip konsultasi dan pengaduan, yaitu kumpulan dokumentasi proses hingga hasil konsultasi dan pengaduan pada Unit Lokus Evaluasi.\n- Laporan, yaitu dokumentasi yang memuat informasi terkait jumlah laporan konsultasi dan pengaduan yang masuk, diproses, dan telah ditindaklanjuti.\n- Monitoring dan evaluasi (monev), yaitu proses peninjauan laporan konsultasi dan pengaduan secara berkala.\n- Tindak lanjut, yaitu langkah perbaikan berdasarkan hasil monitoring dan evaluasi (monev) yang telah dilakukan. Bentuk tindak lanjut dapat berupa FAQ serta bukti sebelum dan sesudah tindak lanjut.\n- Publikasi, yaitu penyampaian rekapitulasi hasil konsultasi dan pengaduan kepada publik, baik melalui media online maupun offline, dalam bentuk pie chart, infografis, maupun laporan.\n- Rubrik, dokumentasi, dan publikasi konsultasi dan pengaduan merupakan arsip proses konsultasi atau pengaduan yang telah dilakukan dan dapat dijadikan referensi, baik oleh masyarakat maupun oleh unit penyelenggara pelayanan publik. Contohnya berupa rubrik, FAQ pada website, dan lain sebagainya.\n- Laporan berkala minimal memuat informasi terkait jumlah laporan yang masuk, sedang diproses, dan telah ditindaklanjuti.",
         "scale": [
             {
                 "score": 0,

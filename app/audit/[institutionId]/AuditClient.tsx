@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { RefreshCw, FolderOpen, MessageCircle, Check } from 'lucide-react'
+import { RefreshCw, FolderOpen, MessageCircle, Check, Info } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { getEvidenceFilesAction, saveAssessmentAction, DocumentReviewInput } from '../actions'
 import FullscreenButton from '@/components/FullscreenButton'
 import ReferenceDatesPanel from '@/components/ReferenceDatesPanel'
@@ -38,6 +39,7 @@ interface Indicator {
   order_number: number
   scoring_scale?: Array<{ score: number; description: string }> | null
   required_documents?: any
+  explanation?: string | null
 }
 
 interface Aspect {
@@ -145,6 +147,7 @@ export default function AuditClient({
   const [showDebug, setShowDebug] = useState<boolean>(false)
 
   const [showGuidance, setShowGuidance] = useState<boolean>(false)
+  const [showExplanationModal, setShowExplanationModal] = useState<boolean>(false)
 
   // Debounce ref
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -863,8 +866,17 @@ export default function AuditClient({
                 <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-md text-[10px] font-extrabold uppercase border border-blue-500/20">
                   {activeIndicator.code}
                 </span>
-                <h3 className="text-lg font-bold text-white tracking-tight pt-1 leading-tight">
-                  {activeIndicator.name}
+                <h3 className="text-lg font-bold text-white tracking-tight pt-1 leading-tight flex items-center gap-2">
+                  <span className="flex-1">{activeIndicator.name}</span>
+                  {activeIndicator.explanation && (
+                    <button
+                      onClick={() => setShowExplanationModal(true)}
+                      className="text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors p-1 rounded-lg shrink-0 cursor-pointer"
+                      title="Lihat Penjelasan"
+                    >
+                      <Info size={18} />
+                    </button>
+                  )}
                 </h3>
               </div>
 
@@ -1047,6 +1059,60 @@ export default function AuditClient({
 
       {/* Floating Reference Dates Panel */}
       <ReferenceDatesPanel institutionId={institution.id} initialNote={initialNote} />
+
+      {/* Explanation Modal */}
+      {showExplanationModal && activeIndicator && activeIndicator.explanation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowExplanationModal(false)}
+          />
+          {/* Dialog Body */}
+          <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+              <h3 className="text-base font-bold text-white leading-none flex items-center">
+                <span className="text-blue-500 mr-2 font-mono text-sm">{activeIndicator.code}</span>
+                Penjelasan
+              </h3>
+              <button 
+                onClick={() => setShowExplanationModal(false)}
+                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Tutup"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* Content Area */}
+            <div className="px-6 py-5 overflow-y-auto flex-1 text-sm text-zinc-300 leading-relaxed max-h-[calc(85vh-120px)] thin-scrollbar">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-3 last:mb-0 text-sm leading-relaxed text-zinc-300">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1 text-zinc-300">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1 text-zinc-300">{children}</ol>,
+                  li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
+                }}
+              >
+                {activeIndicator.explanation}
+              </ReactMarkdown>
+            </div>
+            {/* Footer */}
+            <div className="px-6 py-3.5 border-t border-zinc-800/60 bg-zinc-950/20 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowExplanationModal(false)}
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/60 text-zinc-200 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

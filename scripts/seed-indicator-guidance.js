@@ -70,13 +70,16 @@ async function seed() {
       continue;
     }
 
-    // Build update payload dynamically
+        // Build update payload dynamically
     const updateData = {};
     if (scale !== undefined) {
       updateData.scoring_scale = scale;
     }
     if (required_documents !== undefined) {
       updateData.required_documents = required_documents;
+    }
+    if (entry.explanation !== undefined) {
+      updateData.explanation = entry.explanation;
     }
 
     // If nothing to update, skip
