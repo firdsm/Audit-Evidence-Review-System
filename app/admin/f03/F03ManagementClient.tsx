@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 
 interface Institution {
@@ -23,6 +23,23 @@ export default function F03ManagementClient({
   const [f03Scores, setF03Scores] = useState<Record<string, number>>(initialScores)
   const [singleId, setSingleId] = useState('')
   const [singleScore, setSingleScore] = useState('')
+
+  // Combobox states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = React.useRef<HTMLDivElement>(null)
+
+  // Click outside auto-close handler
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   
   // Bulk state
   const [bulkCategory, setBulkCategory] = useState('ALL')
@@ -192,27 +209,92 @@ export default function F03ManagementClient({
             </div>
 
             <form onSubmit={handleSingleSave} className="space-y-4">
-              <div className="space-y-2">
+              {/* Combobox Searchable Select */}
+              <div className="space-y-2 relative" ref={dropdownRef}>
                 <label className="text-xs text-zinc-400 font-semibold block">Pilih Instansi</label>
-                <select
-                  value={singleId}
-                  onChange={(e) => {
-                    setSingleId(e.target.value)
-                    setSingleScore(f03Scores[e.target.value]?.toString() || '')
-                  }}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                  required
+                
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(!isOpen)}
+                  className="w-full bg-zinc-950 border border-zinc-850 rounded-xl px-3 py-2.5 text-xs text-left text-zinc-200 flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-violet-500/50 cursor-pointer"
                 >
-                  <option value="">-- Pilih Instansi --</option>
-                  {institutions.map((i) => {
-                    const currentVal = f03Scores[i.id] !== undefined ? ` (Skor: ${f03Scores[i.id].toFixed(2)})` : ' (Belum Diisi)'
-                    return (
-                      <option key={i.id} value={i.id}>
-                        [{i.category}] {i.name} {currentVal}
-                      </option>
-                    )
-                  })}
-                </select>
+                  <span className="truncate">
+                    {(() => {
+                      const sel = institutions.find(i => i.id === singleId)
+                      return sel ? `[${sel.category}] ${sel.name}` : '-- Pilih Instansi --'
+                    })()}
+                  </span>
+                  <svg className={`w-4 h-4 text-zinc-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isOpen && (
+                  <div className="absolute z-30 w-full mt-1.5 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl shadow-black overflow-hidden flex flex-col">
+                    {/* Search Field */}
+                    <div className="p-2 border-b border-zinc-800 bg-zinc-950">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Ketik nama atau kategori untuk mencari..."
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500/50"
+                        autoFocus
+                      />
+                    </div>
+                    
+                    {/* List Items */}
+                    <div className="max-h-60 overflow-y-auto divide-y divide-zinc-850/40 py-1">
+                      {(() => {
+                        const filtered = institutions.filter(i => 
+                          i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          i.category.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        
+                        if (filtered.length === 0) {
+                          return (
+                            <div className="px-3 py-4 text-xs text-zinc-500 text-center">
+                              Tidak ada instansi ditemukan
+                            </div>
+                          )
+                        }
+
+                        return filtered.map((i) => {
+                          const hasScore = f03Scores[i.id] !== undefined
+                          const scoreVal = f03Scores[i.id]
+                          const isSelected = i.id === singleId
+                          return (
+                            <button
+                              key={i.id}
+                              type="button"
+                              onClick={() => {
+                                setSingleId(i.id)
+                                setSingleScore(scoreVal?.toString() || '')
+                                setIsOpen(false)
+                                setSearchQuery('')
+                              }}
+                              className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors hover:bg-zinc-800/80 ${
+                                isSelected ? 'bg-violet-600/10 text-violet-400 font-semibold' : 'text-zinc-300'
+                              }`}
+                            >
+                              <div className="min-w-0 pr-2">
+                                <div className="font-medium truncate">{i.name}</div>
+                                <div className="text-[10px] text-zinc-500 mt-0.5">{i.category}</div>
+                              </div>
+                              <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                hasScore 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                  : 'bg-zinc-950 text-zinc-500 border-zinc-850'
+                              }`}>
+                                {hasScore ? `Skor: ${scoreVal.toFixed(2)}` : 'Belum Diisi'}
+                              </span>
+                            </button>
+                          )
+                        })
+                      })()}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
