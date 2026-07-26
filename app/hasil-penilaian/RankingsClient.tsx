@@ -507,21 +507,21 @@ export default function RankingsClient({
       <AnnouncementBanner page="hasil_penilaian" />
 
       {/* MAIN CONTAINER */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-8 pb-28 space-y-6">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-5 pb-28 space-y-4">
         {/* Header & Description */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
           <div className="space-y-1">
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
               Hasil Penilaian
             </h1>
-            <p className="text-sm text-zinc-400">
+            <p className="text-xs text-zinc-400">
               Rekapitulasi peringkat nilai kepatuhan seluruh instansi berdasarkan bobot aktif.
             </p>
           </div>
         </div>
 
         {/* Filters, Search and Export Area — Sticky Bar */}
-        <div className="sticky top-[65px] z-10 -mx-6 px-6 py-4 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/50 space-y-3">
+        <div className="sticky top-[65px] z-10 -mx-6 px-6 py-3 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/50 space-y-2">
 
           {/* ── Horizontal Tab Strip ── */}
           <div className="border-b border-zinc-800">
@@ -637,7 +637,7 @@ export default function RankingsClient({
             {errorMsg}
           </div>
         ) : sortedRankings.length === 0 ? (
-          <div className="p-10 bg-zinc-900/10 border border-zinc-800/60 rounded-2xl text-center text-zinc-500 text-sm">
+          <div className="p-8 bg-zinc-900/10 border border-zinc-800/60 rounded-2xl text-center text-zinc-500 text-sm">
             Tidak ada instansi yang sesuai dengan filter pencarian.
           </div>
         ) : (
@@ -647,10 +647,10 @@ export default function RankingsClient({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-zinc-800/80 text-xs font-bold text-zinc-400 bg-zinc-900/35">
-                    <th className="px-6 py-4 w-24 text-center">Peringkat</th>
+                    <th className="px-5 py-3 w-24 text-center">Peringkat</th>
                     {/* Sortable: Nama Institusi */}
                     <th
-                      className="px-6 py-4 cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      className="px-5 py-3 cursor-pointer select-none hover:text-zinc-200 transition-colors"
                       onClick={() => handleSort('name')}
                     >
                       <span className="inline-flex items-center gap-1.5">
@@ -662,7 +662,7 @@ export default function RankingsClient({
                     </th>
                     {/* Sortable: F-02 */}
                     <th
-                      className="px-6 py-4 w-28 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      className="px-5 py-3 w-28 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
                       onClick={() => handleSort('f02')}
                     >
                       <span className="inline-flex items-center justify-center gap-1">
@@ -674,7 +674,7 @@ export default function RankingsClient({
                     </th>
                     {/* Sortable: F-03 */}
                     <th
-                      className="px-6 py-4 w-28 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      className="px-5 py-3 w-28 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
                       onClick={() => handleSort('f03')}
                     >
                       <span className="inline-flex items-center justify-center gap-1">
@@ -686,7 +686,7 @@ export default function RankingsClient({
                     </th>
                     {/* Sortable: Nilai Akhir */}
                     <th
-                      className="px-6 py-4 w-32 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      className="px-5 py-3 w-32 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
                       onClick={() => handleSort('totalScore')}
                     >
                       <span className="inline-flex items-center justify-center gap-1">
@@ -696,9 +696,9 @@ export default function RankingsClient({
                         </span>
                       </span>
                     </th>
-                    <th className="px-6 py-4 w-20 text-center">Kategori</th>
-                    <th className="px-6 py-4">Makna</th>
-                    <th className="px-6 py-4 w-16 text-center"></th>
+                    <th className="px-5 py-3 w-20 text-center">Kategori</th>
+                    <th className="px-5 py-3">Makna</th>
+                    <th className="px-5 py-3 w-16 text-center"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/40 text-sm">
@@ -712,7 +712,7 @@ export default function RankingsClient({
                         key={inst.institutionId}
                         className="hover:bg-zinc-900/20 transition-colors"
                       >
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-5 py-2.5 text-center">
                           <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-bold ${
                             rank === 1 && inst.totalScore !== null
                               ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-md shadow-amber-500/5'
@@ -725,15 +725,15 @@ export default function RankingsClient({
                             {rank !== null ? `#${rank}` : '-'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 font-semibold text-zinc-200">
+                        <td className="px-5 py-2.5 font-semibold text-zinc-200">
                           {inst.name}
                         </td>
-                        <td className="px-6 py-4 text-center font-medium text-zinc-300">
+                        <td className="px-5 py-2.5 text-center font-medium text-zinc-300">
                           {inst.f02 !== null ? inst.f02.toFixed(2) : (
                             <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-5 py-2.5 text-center">
                           {inst.f02 !== null ? (
                             inst.f03 !== null ? (
                               <span className="font-medium text-zinc-350">{inst.f03.toFixed(2)}</span>
@@ -746,7 +746,7 @@ export default function RankingsClient({
                             <span className="text-zinc-650 text-xs">—</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-5 py-2.5 text-center">
                           <div className="flex items-center justify-center gap-2">
                             {inst.f02 !== null ? (
                               <span className="font-extrabold text-white">
@@ -757,7 +757,7 @@ export default function RankingsClient({
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-5 py-2.5 text-center">
                           {inst.f02 !== null ? (
                             <span
                               className={`inline-flex px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-default ${scoreCat.class}`}
@@ -769,7 +769,7 @@ export default function RankingsClient({
                             <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-zinc-300">
+                        <td className="px-5 py-2.5 text-sm text-zinc-300">
                           {inst.f02 !== null ? (
                             scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : (
                               <span className="text-zinc-600 text-xs">—</span>
@@ -778,7 +778,7 @@ export default function RankingsClient({
                             <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-5 py-2.5 text-center">
                           <button
                             onClick={() => handleDownloadKertasKerja(inst.institutionId, inst.name)}
                             disabled={downloadingId !== null}

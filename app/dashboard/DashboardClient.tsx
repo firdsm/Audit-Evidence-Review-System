@@ -379,7 +379,7 @@ export default function DashboardClient({
       {/* ─────────────────────────────────────────────────────────────────────
           Main content — semua di sini scroll normal kecuali filter bar
       ──────────────────────────────────────────────────────────────────────── */}
-      <main className="relative z-0 max-w-7xl mx-auto px-6 pt-8 pb-20 space-y-6">
+      <main className="relative z-0 max-w-7xl mx-auto px-6 pt-5 pb-20 space-y-4">
 
         {/* ─────────────────────────────────────────────────────────────────
             2. HEADING — normal flow, TIDAK sticky.
@@ -387,10 +387,10 @@ export default function DashboardClient({
             seperti konten biasa.
         ──────────────────────────────────────────────────────────────────── */}
         <div className="space-y-1">
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
             Daftar Instansi
           </h1>
-          <p className="text-sm text-zinc-400">
+          <p className="text-xs text-zinc-400">
             Pilih instansi untuk melakukan penilaian audit bukti pelayanan publik.
           </p>
         </div>
@@ -398,7 +398,7 @@ export default function DashboardClient({
         {/* ─────────────────────────────────────────────────────────────────
             3. FILTER BAR — sticky top-[65px] (= tinggi top bar).
         ──────────────────────────────────────────────────────────────────── */}
-        <div className="sticky top-[65px] z-10 -mx-6 px-6 py-4 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/50 space-y-3">
+        <div className="sticky top-[65px] z-10 -mx-6 px-6 py-3 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/50 space-y-2">
           {/* ── Top-level filter tabs: Per Kategori / OPD Prioritas ── */}
           <div className="border-b border-zinc-800">
             <div className="flex items-center gap-0 overflow-x-auto scrollbar-none -mb-px">
@@ -504,7 +504,7 @@ export default function DashboardClient({
         ──────────────────────────────────────────────────────────────────── */}
         <div className="bg-zinc-900/20 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-md">
           {sortedInstitutions.length === 0 ? (
-            <div className="p-12 text-center text-zinc-500 space-y-2">
+            <div className="p-8 text-center text-zinc-500 space-y-2">
               <svg className="w-12 h-12 mx-auto opacity-30 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -516,10 +516,10 @@ export default function DashboardClient({
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 text-zinc-400 font-semibold bg-zinc-900/10">
-                    <th className="py-4 px-4 w-10 text-center">No.</th>
+                    <th className="py-3 px-4 w-10 text-center">No.</th>
                     {/* Sortable: Nama Instansi */}
                     <th
-                      className="py-4 px-6 cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      className="py-3 px-5 cursor-pointer select-none hover:text-zinc-200 transition-colors"
                       onClick={() => handleSort('name')}
                     >
                       <span className="inline-flex items-center gap-1.5">
@@ -529,10 +529,10 @@ export default function DashboardClient({
                         </span>
                       </span>
                     </th>
-                    <th className="py-4 px-6 w-40">Kategori</th>
+                    <th className="py-3 px-5 w-40">Kategori</th>
                     {/* Sortable: Progres Penilaian */}
                     <th
-                      className="py-4 px-6 w-52 cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      className="py-3 px-5 w-52 cursor-pointer select-none hover:text-zinc-200 transition-colors"
                       onClick={() => handleSort('assessmentsCount')}
                     >
                       <span className="inline-flex items-center gap-1.5">
@@ -544,7 +544,7 @@ export default function DashboardClient({
                     </th>
                     {/* Sortable: % Kelengkapan Dokumen */}
                     <th
-                      className="py-4 px-6 w-52 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      className="py-3 px-5 w-52 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
                       onClick={() => handleSort('completeness')}
                     >
                       <span className="inline-flex items-center justify-center gap-1">
@@ -554,7 +554,7 @@ export default function DashboardClient({
                         </span>
                       </span>
                     </th>
-                    <th className="py-4 px-4 w-16 text-center"></th>
+                    <th className="py-3 px-4 w-16 text-center"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/50">
@@ -572,18 +572,21 @@ export default function DashboardClient({
                         onClick={() => router.push(`/audit/${inst.id}`)}
                         className="hover:bg-zinc-900/40 transition-colors cursor-pointer group"
                       >
-                        <td className="py-4 px-4 text-center text-zinc-500 font-mono text-xs">
+                        <td className="py-2.5 px-4 text-center text-zinc-500 font-mono text-xs">
                           {rowNumber}
                         </td>
-                        <td className="py-4 px-6 font-semibold text-white group-hover:text-blue-400 transition-colors">
+                        <td className="py-2.5 px-5 font-semibold text-white group-hover:text-blue-400 transition-colors">
                           {inst.name}
                         </td>
-                        <td className="py-4 px-6">
-                          <span className="px-2.5 py-0.5 bg-zinc-800 text-zinc-300 rounded-md text-xs font-semibold border border-zinc-700/30">
+                        <td className="py-2.5 px-5 max-w-[160px]">
+                          <span
+                            title={inst.category}
+                            className="inline-block w-fit max-w-full truncate px-2.5 py-0.5 bg-zinc-800 text-zinc-300 rounded-md text-xs font-semibold border border-zinc-700/30"
+                          >
                             {inst.category}
                           </span>
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="py-2.5 px-5">
                           <div className="space-y-1.5 max-w-xs">
                             <div className="flex justify-between items-center text-xs">
                               <span className="font-mono text-zinc-400">
@@ -599,7 +602,7 @@ export default function DashboardClient({
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-6 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-2.5 px-5 text-center" onClick={(e) => e.stopPropagation()}>
                           {docStats && docStats.percentage !== null ? (
                             <div className="inline-block">
                               <button
@@ -628,7 +631,7 @@ export default function DashboardClient({
                             <span className="text-xs text-zinc-500 italic">Belum dicek</span>
                           )}
                         </td>
-                        <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-2.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={(e) => handleExportTemuan(inst.id, e)}
