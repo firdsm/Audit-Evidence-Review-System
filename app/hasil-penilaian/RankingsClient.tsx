@@ -451,7 +451,7 @@ export default function RankingsClient({
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-white font-sans overflow-hidden">
+    <div className="relative min-h-screen bg-zinc-950 text-white font-sans">
       {/* Background decoration */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(120,119,198,0.08),transparent_50%)] pointer-events-none" />
 
@@ -520,8 +520,8 @@ export default function RankingsClient({
           </div>
         </div>
 
-        {/* Filters, Search and Export Area */}
-        <div className="space-y-3">
+        {/* Filters, Search and Export Area — Sticky Bar */}
+        <div className="sticky top-[65px] z-10 -mx-6 px-6 py-4 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/50 space-y-3">
 
           {/* ── Horizontal Tab Strip ── */}
           <div className="border-b border-zinc-800">
