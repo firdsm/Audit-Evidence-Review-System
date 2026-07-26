@@ -513,7 +513,6 @@ export default function DashboardClient({
                         </span>
                       </span>
                     </th>
-                    <th className="py-3 px-5 w-40">Kategori</th>
                     {/* Sortable: Progres Penilaian */}
                     <th
                       className="py-3 px-5 w-52 cursor-pointer select-none hover:text-zinc-200 transition-colors"
@@ -563,20 +562,14 @@ export default function DashboardClient({
                           <span
                             className="block truncate"
                             onMouseEnter={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect()
-                              setNamePopover({ id: inst.id, name: inst.name, rect })
+                              if (e.currentTarget.scrollWidth > e.currentTarget.clientWidth) {
+                                const rect = e.currentTarget.getBoundingClientRect()
+                                setNamePopover({ id: inst.id, name: inst.name, rect })
+                              }
                             }}
                             onMouseLeave={() => setNamePopover(null)}
                           >
                             {inst.name}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-5 max-w-[160px]">
-                          <span
-                            title={inst.category}
-                            className="inline-block w-fit max-w-full truncate px-2.5 py-0.5 bg-zinc-800 text-zinc-300 rounded-md text-xs font-semibold border border-zinc-700/30"
-                          >
-                            {inst.category}
                           </span>
                         </td>
                         <td className="py-2.5 px-5">

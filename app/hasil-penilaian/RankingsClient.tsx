@@ -732,8 +732,10 @@ export default function RankingsClient({
                           <span
                             className="block truncate"
                             onMouseEnter={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect()
-                              setNamePopover({ id: inst.institutionId, name: inst.name, rect })
+                              if (e.currentTarget.scrollWidth > e.currentTarget.clientWidth) {
+                                const rect = e.currentTarget.getBoundingClientRect()
+                                setNamePopover({ id: inst.institutionId, name: inst.name, rect })
+                              }
                             }}
                             onMouseLeave={() => setNamePopover(null)}
                           >

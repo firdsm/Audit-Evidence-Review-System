@@ -26,7 +26,7 @@ export function CategorySelect({ categories, value, onChange, disabled }: Catego
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const selectedLabel = value === 'ALL' ? 'Semua Kategori' : value
+  const selectedLabel = value === 'ALL' ? 'Semua Instansi' : value
 
   return (
     <div ref={containerRef} className="relative shrink-0 w-full sm:w-52">
@@ -53,7 +53,7 @@ export function CategorySelect({ categories, value, onChange, disabled }: Catego
       {/* Floating Menu Popover */}
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1.5 py-1.5 bg-zinc-900/95 border border-zinc-700/80 rounded-xl shadow-2xl backdrop-blur-md z-50 max-h-56 overflow-y-auto scrollbar-thin animate-in fade-in zoom-in-95 duration-100">
-          {/* Option: Semua Kategori */}
+          {/* Option: Semua Instansi */}
           <button
             type="button"
             onClick={() => {
@@ -66,7 +66,7 @@ export function CategorySelect({ categories, value, onChange, disabled }: Catego
                 : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
             }`}
           >
-            <span>Semua Kategori</span>
+            <span>Semua Instansi</span>
             {value === 'ALL' && (
               <svg className="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
