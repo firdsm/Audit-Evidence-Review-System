@@ -4,7 +4,27 @@ import { getAuditorRole } from '@/lib/auth'
 import DashboardClient from './DashboardClient'
 import { getGlobalDebugMode } from '@/app/settings_actions'
 
-const PAGE_SIZE = 10
+import indicatorGuidance from '@/indicator-guidance.json'
+
+interface RequiredDocumentDef {
+  id: string
+  name: string
+  order: number
+  required: boolean
+}
+
+interface IndicatorGuidanceItem {
+  indicator_code: string
+  required_documents: RequiredDocumentDef[]
+}
+
+const guidanceData = indicatorGuidance as IndicatorGuidanceItem[]
+const TOTAL_REQUIRED_DOCUMENTS = guidanceData.reduce(
+  (acc, curr) => acc + (curr.required_documents ? curr.required_documents.length : 0),
+  0
+)
+
+const PAGE_SIZE = 15
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -42,12 +62,14 @@ export default async function DashboardPage() {
       id,
       name,
       category,
+      is_priority,
       last_synced_at,
       assessments (
         id,
         score,
         document_reviews (
-          checked
+          checked,
+          note
         ),
         indicators (
           id,
@@ -86,12 +108,45 @@ export default async function DashboardPage() {
       }
     }).length
 
+    // Calculate Document Completeness Stats
+    let totalReviewedDocs = 0
+    let okCount = 0
+    let noteCount = 0
+
+    const assessmentsList = inst.assessments || []
+    for (const a of assessmentsList) {
+      const docReviews: { checked: boolean; note: string | null }[] = a.document_reviews || []
+      for (const r of docReviews) {
+        totalReviewedDocs++
+        const noteText = r.note ? r.note.trim() : ''
+        if (r.checked && noteText === '') {
+          okCount++
+        } else if (r.checked && noteText !== '') {
+          noteCount++
+        }
+      }
+    }
+
+    const hasReviews = totalReviewedDocs > 0
+    const missingCount = TOTAL_REQUIRED_DOCUMENTS - okCount - noteCount
+    const percentage = hasReviews
+      ? Math.round((okCount / TOTAL_REQUIRED_DOCUMENTS) * 100)
+      : null
+
     return {
       id: inst.id,
       name: inst.name,
       category: inst.category,
+      is_priority: !!inst.is_priority,
       last_synced_at: inst.last_synced_at || '',
       assessmentsCount: completedCount,
+      docCompleteness: {
+        okCount,
+        noteCount,
+        missingCount: Math.max(0, missingCount),
+        totalRequired: TOTAL_REQUIRED_DOCUMENTS,
+        percentage,
+      },
     }
   })
 
