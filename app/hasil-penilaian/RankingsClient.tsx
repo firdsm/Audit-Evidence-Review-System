@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import UserDropdown from '@/components/UserDropdown'
 import FullscreenButton from '@/components/FullscreenButton'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
+import { CategorySelect } from '@/components/CategorySelect'
 
 interface RankingsClientProps {
   userEmail: string
@@ -88,17 +90,36 @@ export default function RankingsClient({
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
 
+  // Name hover popover state
+  const [namePopover, setNamePopover] = useState<{
+    id: string
+    name: string
+    rect: DOMRect
+  } | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const handleScrollOrResize = () => setNamePopover(null)
+    window.addEventListener('scroll', handleScrollOrResize, true)
+    window.addEventListener('resize', handleScrollOrResize)
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true)
+      window.removeEventListener('resize', handleScrollOrResize)
+    }
+  }, [])
+
   // Fetch rankings and value categories
   const fetchData = async (mode: FilterMode, categoryFilter: string) => {
     setLoading(true)
     setErrorMsg(null)
     try {
-      let url = '/api/scores/all'
-      if (mode === 'opd-prioritas') {
-        url = '/api/scores/all?priority=true'
-      } else if (mode === 'per-kategori' && categoryFilter !== 'ALL') {
-        url = `/api/scores/all?category=${encodeURIComponent(categoryFilter)}`
-      }
+      const params = new URLSearchParams()
+      if (mode === 'opd-prioritas') params.set('priority', 'true')
+      if (selectedCategory !== 'ALL') params.set('category', selectedCategory)
+
+      const queryString = params.toString()
+      const url = `/api/scores/all${queryString ? `?${queryString}` : ''}`
 
       const [resRankings, resValueCats] = await Promise.all([
         fetch(url),
@@ -130,6 +151,11 @@ export default function RankingsClient({
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat)
+    setCurrentPage(1)
   }
 
   useEffect(() => {
@@ -224,8 +250,9 @@ export default function RankingsClient({
   const handleFilterMode = (mode: FilterMode) => {
     if (mode === filterMode) return
     setFilterMode(mode)
-    // reset sub-category when switching to OPD Prioritas
-    if (mode === 'opd-prioritas') setSelectedCategory('ALL')
+    setSelectedCategory('ALL')
+    setSearchInput('')
+    setCurrentPage(1)
   }
 
 
@@ -562,40 +589,9 @@ export default function RankingsClient({
             </div>
           </div>
 
-          {/* ── Category sub-tabs (only when Per Kategori is active) ── */}
-          {filterMode === 'per-kategori' && (
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                id="filter-subcat-semua"
-                onClick={() => setSelectedCategory('ALL')}
-                className={`px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer ${
-                  selectedCategory === 'ALL'
-                    ? 'bg-zinc-100 border-zinc-100 text-zinc-950'
-                    : 'bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-                }`}
-              >
-                Semua Kategori
-              </button>
-              {allCategories.map((cat) => (
-                <button
-                  key={cat}
-                  id={`filter-subcat-${cat.toLowerCase().replace(/\s+/g, '-')}`}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer ${
-                    selectedCategory === cat
-                      ? 'bg-zinc-100 border-zinc-100 text-zinc-950'
-                      : 'bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* ── Search bar & Export to Excel ── */}
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            {/* Search Input */}
+          {/* Search bar, Category Dropdown, & Export Action Container */}
+          <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between pt-1">
+            {/* Search Input (KIRI, flex-1) */}
             <div className="relative flex-1">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -607,17 +603,24 @@ export default function RankingsClient({
                 placeholder="Cari nama instansi..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-xs placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+                className="w-full h-9 pl-9 pr-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-xs placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
               />
             </div>
 
-            {/* Export Excel Button */}
+            {/* Category Dropdown (TENGAH, w-52 di desktop, flex-1 di mobile) */}
+            <CategorySelect
+              categories={allCategories}
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+            />
+
+            {/* Export Excel Button (KANAN, Outline / Secondary Style) */}
             <button
               onClick={handleExportExcel}
               disabled={exporting || filteredRankings.length === 0}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:border-zinc-800 disabled:cursor-not-allowed border border-emerald-500/30 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/10 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center gap-2 px-3.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white disabled:bg-zinc-900/50 disabled:text-zinc-600 disabled:border-zinc-850 disabled:cursor-not-allowed border border-zinc-700/60 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-emerald-400 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               {exporting ? 'Mengekspor...' : 'Export Daftar Instansi'}
@@ -725,59 +728,58 @@ export default function RankingsClient({
                             {rank !== null ? `#${rank}` : '-'}
                           </span>
                         </td>
-                        <td className="px-5 py-2.5 font-semibold text-zinc-200">
-                          {inst.name}
+                        <td className="px-5 py-2.5 font-semibold text-zinc-200 max-w-[260px]">
+                          <span
+                            className="block truncate"
+                            onMouseEnter={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setNamePopover({ id: inst.institutionId, name: inst.name, rect })
+                            }}
+                            onMouseLeave={() => setNamePopover(null)}
+                          >
+                            {inst.name}
+                          </span>
                         </td>
-                        <td className="px-5 py-2.5 text-center font-medium text-zinc-300">
-                          {inst.f02 !== null ? inst.f02.toFixed(2) : (
-                            <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-2.5 text-center">
-                          {inst.f02 !== null ? (
-                            inst.f03 !== null ? (
-                              <span className="font-medium text-zinc-350">{inst.f03.toFixed(2)}</span>
-                            ) : (
-                              <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/25 text-red-400 text-[9px] font-bold uppercase rounded-md">
-                                Belum Diisi
-                              </span>
-                            )
-                          ) : (
-                            <span className="text-zinc-650 text-xs">—</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-2.5 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {inst.f02 !== null ? (
+                        {inst.f02 !== null ? (
+                          <>
+                            <td className="px-5 py-2.5 text-center font-medium text-zinc-300">
+                              {inst.f02.toFixed(2)}
+                            </td>
+                            <td className="px-5 py-2.5 text-center">
+                              {inst.f03 !== null ? (
+                                <span className="font-medium text-zinc-350">{inst.f03.toFixed(2)}</span>
+                              ) : (
+                                <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/25 text-red-400 text-[9px] font-bold uppercase rounded-md">
+                                  Belum Diisi
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-5 py-2.5 text-center">
                               <span className="font-extrabold text-white">
                                 {inst.totalScore !== null ? inst.totalScore.toFixed(2) : '-'}
                               </span>
-                            ) : (
-                              <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-5 py-2.5 text-center">
-                          {inst.f02 !== null ? (
-                            <span
-                              className={`inline-flex px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-default ${scoreCat.class}`}
-                              title={scoreCat.makna}
-                            >
-                              {scoreCat.kode}
-                            </span>
-                          ) : (
+                            </td>
+                            <td className="px-5 py-2.5 text-center">
+                              <span
+                                className={`inline-flex px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-default ${scoreCat.class}`}
+                                title={scoreCat.makna}
+                              >
+                                {scoreCat.kode}
+                              </span>
+                            </td>
+                            <td className="px-5 py-2.5 text-sm text-zinc-300">
+                              {scoreCat.makna !== 'Belum Terkategori' ? (
+                                scoreCat.makna
+                              ) : (
+                                <span className="text-zinc-600 text-xs">—</span>
+                              )}
+                            </td>
+                          </>
+                        ) : (
+                          <td colSpan={5} className="px-5 py-2.5 text-center">
                             <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-2.5 text-sm text-zinc-300">
-                          {inst.f02 !== null ? (
-                            scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : (
-                              <span className="text-zinc-600 text-xs">—</span>
-                            )
-                          ) : (
-                            <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
-                          )}
-                        </td>
+                          </td>
+                        )}
                         <td className="px-5 py-2.5 text-center">
                           <button
                             onClick={() => handleDownloadKertasKerja(inst.institutionId, inst.name)}
@@ -990,6 +992,21 @@ export default function RankingsClient({
             )}
           </div>
         </div>
+      )}
+
+      {/* ── React Portal Popover: Full Institution Name ── */}
+      {mounted && namePopover && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: `${Math.max(10, namePopover.rect.top - 42)}px`,
+            left: `${Math.max(10, namePopover.rect.left)}px`,
+          }}
+          className="max-w-xs px-3 py-1.5 bg-zinc-900/95 border border-zinc-700/90 rounded-xl shadow-2xl backdrop-blur-md z-50 text-xs font-semibold text-zinc-100 pointer-events-none animate-in fade-in zoom-in-95 duration-100"
+        >
+          {namePopover.name}
+        </div>,
+        document.body
       )}
     </div>
   )

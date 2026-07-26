@@ -7,6 +7,7 @@ import Link from 'next/link'
 import UserDropdown from '@/components/UserDropdown'
 import FullscreenButton from '@/components/FullscreenButton'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
+import { CategorySelect } from '@/components/CategorySelect'
 
 interface DocCompleteness {
   okCount: number
@@ -74,11 +75,19 @@ export default function DashboardClient({
     rect: DOMRect
     stats: NonNullable<InstitutionData['docCompleteness']>
   } | null>(null)
+  const [namePopover, setNamePopover] = useState<{
+    id: string
+    name: string
+    rect: DOMRect
+  } | null>(null)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    const handleScrollOrResize = () => setActivePopover(null)
+    const handleScrollOrResize = () => {
+      setActivePopover(null)
+      setNamePopover(null)
+    }
     window.addEventListener('scroll', handleScrollOrResize, true)
     window.addEventListener('resize', handleScrollOrResize)
     return () => {
@@ -116,7 +125,8 @@ export default function DashboardClient({
   const handleFilterMode = (mode: FilterMode) => {
     if (mode === filterMode) return
     setFilterMode(mode)
-    if (mode === 'opd-prioritas') setSelectedCategory('ALL')
+    setSelectedCategory('ALL')
+    setSearchInput('')
     setCurrentPage(1)
   }
 
@@ -128,11 +138,9 @@ export default function DashboardClient({
   const filteredInstitutions = React.useMemo(() => {
     return institutions.filter((inst) => {
       const matchSearch = inst.name.toLowerCase().includes(searchInput.toLowerCase())
-      const matchFilterMode =
-        filterMode === 'opd-prioritas'
-          ? !!inst.is_priority
-          : selectedCategory === 'ALL' || inst.category === selectedCategory
-      return matchSearch && matchFilterMode
+      const matchPriority = filterMode === 'opd-prioritas' ? !!inst.is_priority : true
+      const matchCategory = selectedCategory === 'ALL' || inst.category === selectedCategory
+      return matchSearch && matchPriority && matchCategory
     })
   }, [institutions, searchInput, filterMode, selectedCategory])
 
@@ -436,40 +444,9 @@ export default function DashboardClient({
             </div>
           </div>
 
-          {/* ── Category sub-tabs (only when Per Kategori is active) ── */}
-          {filterMode === 'per-kategori' && (
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <button
-                id="dashboard-filter-subcat-semua"
-                onClick={() => handleCategoryChange('ALL')}
-                className={`px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer ${
-                  selectedCategory === 'ALL'
-                    ? 'bg-zinc-100 border-zinc-100 text-zinc-950'
-                    : 'bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-                }`}
-              >
-                Semua Kategori
-              </button>
-              {allCategories.filter(c => c !== 'ALL').map((cat) => (
-                <button
-                  key={cat}
-                  id={`dashboard-filter-subcat-${cat.toLowerCase().replace(/\s+/g, '-')}`}
-                  onClick={() => handleCategoryChange(cat)}
-                  className={`px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer ${
-                    selectedCategory === cat
-                      ? 'bg-zinc-100 border-zinc-100 text-zinc-950'
-                      : 'bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Search bar & Export Rekap Dokumen action panel */}
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pt-1">
-            {/* Search */}
+          {/* Search bar, Category Dropdown, & Export Action Container */}
+          <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between pt-1">
+            {/* Search Input (KIRI, flex-1) */}
             <div className="relative flex-1">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -481,17 +458,24 @@ export default function DashboardClient({
                 placeholder="Cari nama instansi..."
                 value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+                className="w-full h-9 pl-9 pr-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-xs placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
               />
             </div>
 
-            {/* Export Rekap Dokumen Button */}
+            {/* Category Dropdown (TENGAH, w-52 di desktop, flex-1 di mobile) */}
+            <CategorySelect
+              categories={allCategories}
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+            />
+
+            {/* Export Rekap Dokumen Button (KANAN, Outline / Secondary Style) */}
             <button
               onClick={handleExportRekapKelengkapan}
               disabled={exportRekapLoading || filteredInstitutions.length === 0}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:border-zinc-800 disabled:cursor-not-allowed border border-emerald-500/30 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/10 transition-all cursor-pointer shrink-0"
+              className="h-9 flex items-center justify-center gap-2 px-3.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white disabled:bg-zinc-900/50 disabled:text-zinc-600 disabled:border-zinc-850 disabled:cursor-not-allowed border border-zinc-700/60 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-emerald-400 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               {exportRekapLoading ? 'Mengekspor...' : 'Export Daftar Instansi'}
@@ -575,8 +559,17 @@ export default function DashboardClient({
                         <td className="py-2.5 px-4 text-center text-zinc-500 font-mono text-xs">
                           {rowNumber}
                         </td>
-                        <td className="py-2.5 px-5 font-semibold text-white group-hover:text-blue-400 transition-colors">
-                          {inst.name}
+                        <td className="py-2.5 px-5 font-semibold text-white group-hover:text-blue-400 transition-colors max-w-[260px]">
+                          <span
+                            className="block truncate"
+                            onMouseEnter={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setNamePopover({ id: inst.id, name: inst.name, rect })
+                            }}
+                            onMouseLeave={() => setNamePopover(null)}
+                          >
+                            {inst.name}
+                          </span>
                         </td>
                         <td className="py-2.5 px-5 max-w-[160px]">
                           <span
@@ -767,6 +760,21 @@ export default function DashboardClient({
               </span>
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── React Portal Popover: Full Institution Name ── */}
+      {mounted && namePopover && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: `${Math.max(10, namePopover.rect.top - 42)}px`,
+            left: `${Math.max(10, namePopover.rect.left)}px`,
+          }}
+          className="max-w-xs px-3 py-1.5 bg-zinc-900/95 border border-zinc-700/90 rounded-xl shadow-2xl backdrop-blur-md z-50 text-xs font-semibold text-zinc-100 pointer-events-none animate-in fade-in zoom-in-95 duration-100"
+        >
+          {namePopover.name}
         </div>,
         document.body
       )}
