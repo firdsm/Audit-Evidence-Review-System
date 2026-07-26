@@ -516,6 +516,7 @@ export default function DashboardClient({
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 text-zinc-400 font-semibold bg-zinc-900/10">
+                    <th className="py-4 px-4 w-10 text-center">No.</th>
                     {/* Sortable: Nama Instansi */}
                     <th
                       className="py-4 px-6 cursor-pointer select-none hover:text-zinc-200 transition-colors"
@@ -557,12 +558,13 @@ export default function DashboardClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/50">
-                  {paginatedInstitutions.map((inst) => {
+                  {paginatedInstitutions.map((inst, idx) => {
                     const percentage = totalIndicators > 0
                       ? Math.round((inst.assessmentsCount / totalIndicators) * 100)
                       : 0
                     const docStats = inst.docCompleteness
                     const isExportingThis = exportingId === inst.id
+                    const rowNumber = startItem + idx
 
                     return (
                       <tr
@@ -570,6 +572,9 @@ export default function DashboardClient({
                         onClick={() => router.push(`/audit/${inst.id}`)}
                         className="hover:bg-zinc-900/40 transition-colors cursor-pointer group"
                       >
+                        <td className="py-4 px-4 text-center text-zinc-500 font-mono text-xs">
+                          {rowNumber}
+                        </td>
                         <td className="py-4 px-6 font-semibold text-white group-hover:text-blue-400 transition-colors">
                           {inst.name}
                         </td>
