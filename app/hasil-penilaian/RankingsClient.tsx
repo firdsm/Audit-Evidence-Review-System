@@ -18,7 +18,8 @@ interface RankedInstitution {
   institutionId: string
   name: string
   category: string
-  f02: number
+  isPriority: boolean
+  f02: number | null
   f03: number | null
   totalScore: number | null
 }
@@ -43,6 +44,20 @@ const COLOR_CLASSES: Record<string, string> = {
   zinc: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/25',
 }
 
+const PAGE_SIZE = 15
+
+function getPageNumbers(current: number, total: number): (number | '...')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages: (number | '...')[] = []
+  const addPage = (p: number) => { if (!pages.includes(p)) pages.push(p) }
+  addPage(1)
+  if (current > 3) pages.push('...')
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) addPage(p)
+  if (current < total - 2) pages.push('...')
+  addPage(total)
+  return pages
+}
+
 export default function RankingsClient({
   userEmail,
   userName,
@@ -50,7 +65,10 @@ export default function RankingsClient({
   allCategories,
   initialGlobalDebugMode = false,
 }: RankingsClientProps) {
-  const [selectedCategory, setSelectedCategory] = useState('ALL')
+  // filterMode controls which top-level tab is active
+  type FilterMode = 'per-kategori' | 'opd-prioritas'
+  const [filterMode, setFilterMode] = useState<FilterMode>('per-kategori')
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [searchInput, setSearchInput] = useState('')
   const [rankings, setRankings] = useState<RankedInstitution[]>([])
   const [valueCategories, setValueCategories] = useState<ValueCategory[]>([])
@@ -62,15 +80,25 @@ export default function RankingsClient({
   const [exporting, setExporting] = useState(false)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
+  // Sorting state
+  type SortCol = 'name' | 'f02' | 'f03' | 'totalScore'
+  const [sortCol, setSortCol] = useState<SortCol>('totalScore')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+
   // Fetch rankings and value categories
-  const fetchData = async (categoryFilter: string) => {
+  const fetchData = async (mode: FilterMode, categoryFilter: string) => {
     setLoading(true)
     setErrorMsg(null)
     try {
-      const url =
-        categoryFilter === 'ALL'
-          ? '/api/scores/all'
-          : `/api/scores/all?category=${encodeURIComponent(categoryFilter)}`
+      let url = '/api/scores/all'
+      if (mode === 'opd-prioritas') {
+        url = '/api/scores/all?priority=true'
+      } else if (mode === 'per-kategori' && categoryFilter !== 'ALL') {
+        url = `/api/scores/all?category=${encodeURIComponent(categoryFilter)}`
+      }
 
       const [resRankings, resValueCats] = await Promise.all([
         fetch(url),
@@ -106,9 +134,10 @@ export default function RankingsClient({
 
   useEffect(() => {
     startTransition(() => {
-      fetchData(selectedCategory)
+      fetchData(filterMode, selectedCategory)
     })
-  }, [selectedCategory])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterMode, selectedCategory])
 
   // Helper function to find category classification for a given score
   const getScoreCategory = (score: number | null): { kode: string; makna: string; class: string } => {
@@ -130,6 +159,74 @@ export default function RankingsClient({
       inst.name.toLowerCase().includes(searchInput.toLowerCase())
     )
   }, [rankings, searchInput])
+
+  // Sort filteredRankings — unassessed (f02 === null) always stay at the bottom
+  const sortedRankings = useMemo(() => {
+    return [...filteredRankings].sort((a, b) => {
+      // Always push unassessed to bottom regardless of sort direction
+      if (a.f02 === null && b.f02 !== null) return 1
+      if (a.f02 !== null && b.f02 === null) return -1
+      if (a.f02 === null && b.f02 === null) return a.name.localeCompare(b.name)
+
+      let cmp = 0
+      if (sortCol === 'name') {
+        cmp = a.name.localeCompare(b.name)
+      } else if (sortCol === 'f02') {
+        cmp = (a.f02 ?? 0) - (b.f02 ?? 0)
+      } else if (sortCol === 'f03') {
+        // nulls last within assessed group
+        if (a.f03 === null && b.f03 !== null) return sortDir === 'asc' ? 1 : -1
+        if (a.f03 !== null && b.f03 === null) return sortDir === 'asc' ? -1 : 1
+        cmp = (a.f03 ?? 0) - (b.f03 ?? 0)
+      } else {
+        // totalScore — nulls last
+        if (a.totalScore === null && b.totalScore !== null) return 1
+        if (a.totalScore !== null && b.totalScore === null) return -1
+        cmp = (a.totalScore ?? 0) - (b.totalScore ?? 0)
+      }
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [filteredRankings, sortCol, sortDir])
+
+  // Slice for current page
+  const totalCount = sortedRankings.length
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const paginatedRankings = useMemo(() => {
+    const offset = (currentPage - 1) * PAGE_SIZE
+    return sortedRankings.slice(offset, offset + PAGE_SIZE)
+  }, [sortedRankings, currentPage])
+
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const endItem = Math.min(currentPage * PAGE_SIZE, totalCount)
+  const pageNumbers = getPageNumbers(currentPage, totalPages)
+
+  // Reset to page 1 whenever filter/sort changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterMode, selectedCategory, searchInput, sortCol, sortDir])
+
+  // Sort column toggle handler
+  const handleSort = (col: SortCol) => {
+    if (sortCol === col) {
+      setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir(col === 'name' ? 'asc' : 'desc')
+    }
+  }
+
+  function handlePageChange(page: number) {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Handler: switch top-level filter mode
+  const handleFilterMode = (mode: FilterMode) => {
+    if (mode === filterMode) return
+    setFilterMode(mode)
+    // reset sub-category when switching to OPD Prioritas
+    if (mode === 'opd-prioritas') setSelectedCategory('ALL')
+  }
 
 
 
@@ -240,20 +337,20 @@ export default function RankingsClient({
       }
 
       // ── Data rows ────────────────────────────────────────────────────────
-      filteredRankings.forEach((inst, idx) => {
+      sortedRankings.forEach((inst, idx) => {
         const scoreCat = getScoreCategory(inst.totalScore)
         const isEven = idx % 2 === 1
         const rowBg = isEven ? 'FFF1F5F9' : 'FFFFFFFF'
 
         const row = worksheet.addRow({
-          rank:       inst.totalScore !== null ? idx + 1 : '-',
+          rank:       inst.f02 !== null ? (inst.totalScore !== null ? idx + 1 : '-') : '-',
           name:       inst.name,
           category:   inst.category,
-          f02:        parseFloat(inst.f02.toFixed(2)),
-          f03:        inst.f03 !== null ? parseFloat(inst.f03.toFixed(2)) : 'Belum Diisi',
-          totalScore: inst.totalScore !== null ? parseFloat(inst.totalScore.toFixed(2)) : '-',
-          scoreKode:  scoreCat.kode !== '-' ? scoreCat.kode : '-',
-          scoreMakna: scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : '-',
+          f02:        inst.f02 !== null ? parseFloat(inst.f02.toFixed(2)) : 'Belum dilakukan penilaian',
+          f03:        inst.f02 !== null ? (inst.f03 !== null ? parseFloat(inst.f03.toFixed(2)) : 'Belum Diisi') : '-',
+          totalScore: inst.f02 !== null ? (inst.totalScore !== null ? parseFloat(inst.totalScore.toFixed(2)) : '-') : 'Belum dilakukan penilaian',
+          scoreKode:  inst.f02 !== null ? (scoreCat.kode !== '-' ? scoreCat.kode : '-') : 'Belum dilakukan penilaian',
+          scoreMakna: inst.f02 !== null ? (scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : '-') : 'Belum dilakukan penilaian',
         })
         row.height = 18
 
@@ -410,7 +507,7 @@ export default function RankingsClient({
       <AnnouncementBanner page="hasil_penilaian" />
 
       {/* MAIN CONTAINER */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-8 pb-20 space-y-6">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-8 pb-28 space-y-6">
         {/* Header & Description */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
@@ -424,35 +521,79 @@ export default function RankingsClient({
         </div>
 
         {/* Filters, Search and Export Area */}
-        <div className="space-y-4">
-          {/* Category Filters */}
-          <div className="flex flex-wrap items-center gap-2 pb-1">
-            <button
-              onClick={() => setSelectedCategory('ALL')}
-              className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                selectedCategory === 'ALL'
-                  ? 'bg-zinc-100 border-zinc-100 text-zinc-950 font-bold shadow-md'
-                  : 'bg-zinc-900/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
-              }`}
-            >
-              Semua Kategori
-            </button>
-            {allCategories.map((cat) => (
+        <div className="space-y-3">
+
+          {/* ── Horizontal Tab Strip ── */}
+          <div className="border-b border-zinc-800">
+            <div className="flex items-center gap-0 overflow-x-auto scrollbar-none -mb-px">
+
+              {/* Tab: Per Kategori */}
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                  selectedCategory === cat
-                    ? 'bg-zinc-100 border-zinc-100 text-zinc-950 font-bold shadow-md'
-                    : 'bg-zinc-900/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                id="filter-tab-per-kategori"
+                onClick={() => handleFilterMode('per-kategori')}
+                className={`relative shrink-0 px-5 py-3 text-xs font-semibold transition-colors duration-150 cursor-pointer focus:outline-none ${
+                  filterMode === 'per-kategori'
+                    ? 'text-white'
+                    : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                {cat}
+                Per Kategori
+                {filterMode === 'per-kategori' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-t-full" />
+                )}
               </button>
-            ))}
+
+              {/* Tab: OPD Prioritas */}
+              <button
+                id="filter-tab-opd-prioritas"
+                onClick={() => handleFilterMode('opd-prioritas')}
+                className={`relative shrink-0 px-5 py-3 text-xs font-semibold transition-colors duration-150 cursor-pointer focus:outline-none ${
+                  filterMode === 'opd-prioritas'
+                    ? 'text-indigo-400'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                OPD Prioritas
+                {filterMode === 'opd-prioritas' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 rounded-t-full" />
+                )}
+              </button>
+
+            </div>
           </div>
 
-          {/* Search bar & Export to Excel action panel */}
+          {/* ── Category sub-tabs (only when Per Kategori is active) ── */}
+          {filterMode === 'per-kategori' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                id="filter-subcat-semua"
+                onClick={() => setSelectedCategory('ALL')}
+                className={`px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer ${
+                  selectedCategory === 'ALL'
+                    ? 'bg-zinc-100 border-zinc-100 text-zinc-950'
+                    : 'bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                }`}
+              >
+                Semua Kategori
+              </button>
+              {allCategories.map((cat) => (
+                <button
+                  key={cat}
+                  id={`filter-subcat-${cat.toLowerCase().replace(/\s+/g, '-')}`}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer ${
+                    selectedCategory === cat
+                      ? 'bg-zinc-100 border-zinc-100 text-zinc-950'
+                      : 'bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Search bar & Export to Excel ── */}
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             {/* Search Input */}
             <div className="relative flex-1">
@@ -484,6 +625,7 @@ export default function RankingsClient({
           </div>
         </div>
 
+
         {/* Rankings Listing */}
         {loading ? (
           <div className="space-y-4">
@@ -494,7 +636,7 @@ export default function RankingsClient({
           <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-sm text-red-400">
             {errorMsg}
           </div>
-        ) : filteredRankings.length === 0 ? (
+        ) : sortedRankings.length === 0 ? (
           <div className="p-10 bg-zinc-900/10 border border-zinc-800/60 rounded-2xl text-center text-zinc-500 text-sm">
             Tidak ada instansi yang sesuai dengan filter pencarian.
           </div>
@@ -506,18 +648,63 @@ export default function RankingsClient({
                 <thead>
                   <tr className="border-b border-zinc-800/80 text-xs font-bold text-zinc-400 bg-zinc-900/35">
                     <th className="px-6 py-4 w-24 text-center">Peringkat</th>
-                    <th className="px-6 py-4">Nama Institusi</th>
-                    <th className="px-6 py-4 w-28 text-center">F-02</th>
-                    <th className="px-6 py-4 w-28 text-center">F-03</th>
-                    <th className="px-6 py-4 w-32 text-center">Nilai Akhir</th>
+                    {/* Sortable: Nama Institusi */}
+                    <th
+                      className="px-6 py-4 cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      onClick={() => handleSort('name')}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        Nama Institusi
+                        <span className="text-[10px] opacity-60">
+                          {sortCol === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '⇅'}
+                        </span>
+                      </span>
+                    </th>
+                    {/* Sortable: F-02 */}
+                    <th
+                      className="px-6 py-4 w-28 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      onClick={() => handleSort('f02')}
+                    >
+                      <span className="inline-flex items-center justify-center gap-1">
+                        F-02
+                        <span className="text-[10px] opacity-60">
+                          {sortCol === 'f02' ? (sortDir === 'asc' ? '↑' : '↓') : '⇅'}
+                        </span>
+                      </span>
+                    </th>
+                    {/* Sortable: F-03 */}
+                    <th
+                      className="px-6 py-4 w-28 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      onClick={() => handleSort('f03')}
+                    >
+                      <span className="inline-flex items-center justify-center gap-1">
+                        F-03
+                        <span className="text-[10px] opacity-60">
+                          {sortCol === 'f03' ? (sortDir === 'asc' ? '↑' : '↓') : '⇅'}
+                        </span>
+                      </span>
+                    </th>
+                    {/* Sortable: Nilai Akhir */}
+                    <th
+                      className="px-6 py-4 w-32 text-center cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                      onClick={() => handleSort('totalScore')}
+                    >
+                      <span className="inline-flex items-center justify-center gap-1">
+                        Nilai Akhir
+                        <span className="text-[10px] opacity-60">
+                          {sortCol === 'totalScore' ? (sortDir === 'asc' ? '↑' : '↓') : '⇅'}
+                        </span>
+                      </span>
+                    </th>
                     <th className="px-6 py-4 w-20 text-center">Kategori</th>
                     <th className="px-6 py-4">Makna</th>
                     <th className="px-6 py-4 w-16 text-center"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/40 text-sm">
-                  {filteredRankings.map((inst, index) => {
-                    const rank = index + 1
+                  {paginatedRankings.map((inst) => {
+                    const globalIdx = sortedRankings.indexOf(inst)
+                    const rank = inst.f02 !== null ? globalIdx + 1 : null
                     const scoreCat = getScoreCategory(inst.totalScore)
 
                     return (
@@ -535,42 +722,60 @@ export default function RankingsClient({
                               ? 'bg-amber-700/15 text-amber-600 border border-amber-700/30'
                               : 'text-zinc-500'
                           }`}>
-                            {inst.totalScore !== null ? `#${rank}` : '-'}
+                            {rank !== null ? `#${rank}` : '-'}
                           </span>
                         </td>
                         <td className="px-6 py-4 font-semibold text-zinc-200">
                           {inst.name}
                         </td>
                         <td className="px-6 py-4 text-center font-medium text-zinc-300">
-                          {inst.f02.toFixed(2)}
+                          {inst.f02 !== null ? inst.f02.toFixed(2) : (
+                            <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          {inst.f03 !== null ? (
-                            <span className="font-medium text-zinc-350">{inst.f03.toFixed(2)}</span>
+                          {inst.f02 !== null ? (
+                            inst.f03 !== null ? (
+                              <span className="font-medium text-zinc-350">{inst.f03.toFixed(2)}</span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/25 text-red-400 text-[9px] font-bold uppercase rounded-md">
+                                Belum Diisi
+                              </span>
+                            )
                           ) : (
-                            <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/25 text-red-400 text-[9px] font-bold uppercase rounded-md">
-                              Belum Diisi
-                            </span>
+                            <span className="text-zinc-650 text-xs">—</span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-2">
-                            <span className="font-extrabold text-white">
-                              {inst.totalScore !== null ? inst.totalScore.toFixed(2) : '-'}
-                            </span>
+                            {inst.f02 !== null ? (
+                              <span className="font-extrabold text-white">
+                                {inst.totalScore !== null ? inst.totalScore.toFixed(2) : '-'}
+                              </span>
+                            ) : (
+                              <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span
-                            className={`inline-flex px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-default ${scoreCat.class}`}
-                            title={scoreCat.makna}
-                          >
-                            {scoreCat.kode}
-                          </span>
+                          {inst.f02 !== null ? (
+                            <span
+                              className={`inline-flex px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-default ${scoreCat.class}`}
+                              title={scoreCat.makna}
+                            >
+                              {scoreCat.kode}
+                            </span>
+                          ) : (
+                            <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-zinc-300">
-                          {scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : (
-                            <span className="text-zinc-600 text-xs">—</span>
+                          {inst.f02 !== null ? (
+                            scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : (
+                              <span className="text-zinc-600 text-xs">—</span>
+                            )
+                          ) : (
+                            <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -601,8 +806,9 @@ export default function RankingsClient({
 
             {/* Mobile Cards Stack View */}
             <div className="block md:hidden space-y-3">
-              {filteredRankings.map((inst, index) => {
-                const rank = index + 1
+              {paginatedRankings.map((inst) => {
+                const globalIdx = sortedRankings.indexOf(inst)
+                const rank = inst.f02 !== null ? globalIdx + 1 : null
                 const scoreCat = getScoreCategory(inst.totalScore)
 
                 return (
@@ -620,14 +826,20 @@ export default function RankingsClient({
                           ? 'bg-amber-700/15 text-amber-600 border border-amber-700/30'
                           : 'bg-zinc-900 text-zinc-500 border border-zinc-850'
                       }`}>
-                        {inst.totalScore !== null ? `Peringkat #${rank}` : 'Peringkat -'}
+                        {rank !== null ? `Peringkat #${rank}` : 'Peringkat -'}
                       </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${scoreCat.class}`}
-                        title={scoreCat.makna}
-                      >
-                        {scoreCat.kode}
-                      </span>
+                      {inst.f02 !== null ? (
+                        <span
+                          className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${scoreCat.class}`}
+                          title={scoreCat.makna}
+                        >
+                          {scoreCat.kode}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-lg border text-[9px] font-bold bg-zinc-500/15 text-zinc-400 border-zinc-500/25 cursor-default italic">
+                          Belum Dinilai
+                        </span>
+                      )}
                     </div>
 
                     <div className="font-semibold text-sm text-zinc-200">
@@ -637,37 +849,55 @@ export default function RankingsClient({
                     <div className="pt-2 border-t border-zinc-800/40 space-y-1.5 text-xs">
                       <div className="flex justify-between">
                         <span className="text-zinc-500">Skor F-02:</span>
-                        <span className="font-semibold text-zinc-300">{inst.f02.toFixed(2)}</span>
+                        <span className="font-semibold text-zinc-300">
+                          {inst.f02 !== null ? inst.f02.toFixed(2) : (
+                            <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
+                          )}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-zinc-500">Skor F-03:</span>
-                        {inst.f03 !== null ? (
-                          <span className="font-semibold text-zinc-300">{inst.f03.toFixed(2)}</span>
+                        {inst.f02 !== null ? (
+                          inst.f03 !== null ? (
+                            <span className="font-semibold text-zinc-300">{inst.f03.toFixed(2)}</span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-bold uppercase rounded">
+                              Belum Diisi
+                            </span>
+                          )
                         ) : (
-                          <span className="px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-bold uppercase rounded">
-                            Belum Diisi
-                          </span>
+                          <span className="font-semibold text-zinc-500">—</span>
                         )}
                       </div>
                       <div className="flex justify-between items-center pt-1.5 border-t border-zinc-850">
                         <span className="text-zinc-400 font-semibold">Nilai Akhir:</span>
                         <div className="flex items-center gap-1.5">
                           <span className="font-extrabold text-white text-sm">
-                            {inst.totalScore !== null ? inst.totalScore.toFixed(2) : '-'}
+                            {inst.f02 !== null ? (
+                              inst.totalScore !== null ? inst.totalScore.toFixed(2) : '-'
+                            ) : (
+                              <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
+                            )}
                           </span>
                         </div>
                       </div>
                       <div className="flex justify-between items-center gap-3 pt-1.5 border-t border-zinc-850">
                         <span className="text-zinc-400 font-semibold shrink-0">Kategori Nilai:</span>
                         <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className={`shrink-0 px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${scoreCat.class}`}
-                          >
-                            {scoreCat.kode}
-                          </span>
-                          <span className="text-zinc-300 text-xs truncate">
-                            {scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : '—'}
-                          </span>
+                          {inst.f02 !== null ? (
+                            <>
+                              <span
+                                className={`shrink-0 px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${scoreCat.class}`}
+                              >
+                                {scoreCat.kode}
+                              </span>
+                              <span className="text-zinc-300 text-xs truncate">
+                                {scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : '—'}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-zinc-550 text-xs italic">Belum dilakukan penilaian</span>
+                          )}
                         </div>
                       </div>
                       <div className="pt-2 border-t border-zinc-800/40">
@@ -702,6 +932,65 @@ export default function RankingsClient({
           </div>
         )}
       </main>
+
+      {/* ── Pagination Bar (fixed bottom, mirrors Dashboard pattern) ── */}
+      {totalCount > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 px-6 py-3 bg-zinc-950 border-t border-zinc-800/80">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-zinc-500 order-2 sm:order-1">
+              Menampilkan{' '}
+              <span className="text-zinc-300 font-semibold">{startItem}–{endItem}</span>{' '}
+              dari{' '}
+              <span className="text-zinc-300 font-semibold">{totalCount}</span>{' '}
+              instansi
+            </p>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1 order-1 sm:order-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Prev
+                </button>
+
+                {pageNumbers.map((p, i) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${i}`} className="px-2 py-1.5 text-xs text-zinc-600">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => handlePageChange(p as number)}
+                      className={`min-w-[32px] px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer
+                        ${p === currentPage
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                          : 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  Next
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
