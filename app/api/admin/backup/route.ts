@@ -17,27 +17,39 @@ export async function GET() {
   const supabase = await createClient()
 
   try {
-    // Fetch all tables in parallel
+    // Fetch all 13 application tables in parallel
     const [
-      { data: auditors, error: e1 },
-      { data: institutions, error: e2 },
-      { data: aspects, error: e3 },
-      { data: indicators, error: e4 },
-      { data: assessments, error: e5 },
-      { data: documentReviews, error: e6 },
-      { data: folderMappings, error: e7 },
+      { data: appSettings,               error: e01 },
+      { data: auditors,                  error: e02 },
+      { data: institutions,              error: e03 },
+      { data: weightConfigurations,      error: e04 },
+      { data: aspects,                   error: e05 },
+      { data: indicators,                error: e06 },
+      { data: aspectWeights,             error: e07 },
+      { data: indicatorWeights,          error: e08 },
+      { data: indicatorFolderMapping,    error: e09 },
+      { data: assessments,               error: e10 },
+      { data: institutionIndicatorFolders, error: e11 },
+      { data: institutionNotes,          error: e12 },
+      { data: documentReviews,           error: e13 },
     ] = await Promise.all([
+      supabase.from('app_settings').select('*'),
       supabase.from('auditors').select('*').order('id'),
       supabase.from('institutions').select('*').order('id'),
+      supabase.from('weight_configurations').select('*').order('id'),
       supabase.from('aspects').select('*').order('id'),
       supabase.from('indicators').select('*').order('id'),
-      supabase.from('assessments').select('*').order('id'),
-      supabase.from('assessment_document_reviews').select('*').order('id'),
+      supabase.from('aspect_weights').select('*').order('id'),
+      supabase.from('indicator_weights').select('*').order('id'),
       supabase.from('indicator_folder_mapping').select('*').order('id'),
+      supabase.from('assessments').select('*').order('id'),
+      supabase.from('institution_indicator_folders').select('*').order('id'),
+      supabase.from('institution_notes').select('*').order('id'),
+      supabase.from('document_reviews').select('*').order('id'),
     ])
 
-    // Check for errors
-    const errors = [e1, e2, e3, e4, e5, e6, e7].filter(Boolean)
+    // Check for errors — report the first one encountered
+    const errors = [e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11, e12, e13].filter(Boolean)
     if (errors.length > 0) {
       console.error('[backup] Fetch errors:', errors)
       return NextResponse.json(
@@ -54,101 +66,99 @@ export async function GET() {
     const displayTimestamp = `${dateStr} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
     const filename = `aers-backup-${dateStr}-${timeStr}.sql`
 
-    // Build SQL content
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function escapeValue(val: unknown): string {
+      if (val === null || val === undefined) return 'NULL'
+      if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE'
+      if (typeof val === 'number') return String(val)
+      if (typeof val === 'object') {
+        const json = JSON.stringify(val)
+        return `'${json.replace(/'/g, "''")}'`
+      }
+      const escaped = String(val).replace(/'/g, "''")
+      return `'${escaped}'`
+    }
+
+    function section(tableName: string, rows: Record<string, unknown>[] | null): string[] {
+      const out: string[] = []
+      out.push(`-- ─────────────────────────────────────────────────────────`)
+      out.push(`-- DATA: ${tableName}`)
+      out.push(`-- ─────────────────────────────────────────────────────────`)
+      if (!rows || rows.length === 0) {
+        out.push(`-- (no data)`)
+        out.push('')
+        return out
+      }
+      const columns = Object.keys(rows[0])
+      const colList = columns.map((c) => `"${c}"`).join(', ')
+      for (const row of rows) {
+        const values = columns.map((c) => escapeValue(row[c])).join(', ')
+        out.push(`INSERT INTO ${tableName} (${colList}) VALUES (${values});`)
+      }
+      out.push('')
+      return out
+    }
+
+    // ── Build SQL ─────────────────────────────────────────────────────────────
+
     const lines: string[] = []
 
-    // ── Header ──────────────────────────────────────────────────────────────
+    // Header
     lines.push('-- =====================================================')
     lines.push('-- AERS Database Backup')
     lines.push(`-- Generated : ${displayTimestamp}`)
     lines.push('-- Database  : PostgreSQL (Supabase)')
-    lines.push('-- Tables    : auditors, institutions, aspects, indicators,')
-    lines.push('--             assessments, assessment_document_reviews,')
-    lines.push('--             indicator_folder_mapping')
+    lines.push('-- Tables    : app_settings, auditors, institutions,')
+    lines.push('--             weight_configurations, aspects, indicators,')
+    lines.push('--             aspect_weights, indicator_weights,')
+    lines.push('--             indicator_folder_mapping, assessments,')
+    lines.push('--             institution_indicator_folders, institution_notes,')
+    lines.push('--             document_reviews')
     lines.push('-- =====================================================')
     lines.push('')
 
     lines.push('BEGIN;')
     lines.push('')
 
-    // ── TRUNCATE (child-first to respect FK constraints) ─────────────────────
+    // TRUNCATE — child-first (CASCADE handles FK automatically)
     lines.push('-- ─────────────────────────────────────────────────────────')
     lines.push('-- TRUNCATE (child → parent order)')
     lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('TRUNCATE TABLE assessment_document_reviews CASCADE;')
-    lines.push('TRUNCATE TABLE assessments CASCADE;')
-    lines.push('TRUNCATE TABLE indicator_folder_mapping CASCADE;')
-    lines.push('TRUNCATE TABLE indicators CASCADE;')
-    lines.push('TRUNCATE TABLE aspects CASCADE;')
-    lines.push('TRUNCATE TABLE institutions CASCADE;')
-    lines.push('TRUNCATE TABLE auditors CASCADE;')
+    const truncateOrder = [
+      'document_reviews',
+      'institution_notes',
+      'institution_indicator_folders',
+      'assessments',
+      'indicator_folder_mapping',
+      'indicator_weights',
+      'aspect_weights',
+      'indicators',
+      'aspects',
+      'weight_configurations',
+      'institutions',
+      'auditors',
+      'app_settings',
+    ]
+    for (const tbl of truncateOrder) {
+      lines.push(`TRUNCATE TABLE ${tbl} CASCADE;`)
+    }
     lines.push('')
 
-    // ── INSERT helpers ────────────────────────────────────────────────────────
-    function escapeValue(val: unknown): string {
-      if (val === null || val === undefined) return 'NULL'
-      if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE'
-      if (typeof val === 'number') return String(val)
-      if (typeof val === 'object') {
-        // JSON / array
-        const json = JSON.stringify(val)
-        return `'${json.replace(/'/g, "''")}'`
-      }
-      // String: escape single quotes, keep everything else as-is
-      const escaped = String(val).replace(/'/g, "''")
-      return `'${escaped}'`
-    }
-
-    function buildInserts(tableName: string, rows: Record<string, unknown>[] | null): string[] {
-      if (!rows || rows.length === 0) {
-        return [`-- No data in ${tableName}`, '']
-      }
-      const columns = Object.keys(rows[0])
-      const colList = columns.map((c) => `"${c}"`).join(', ')
-      const result: string[] = []
-      for (const row of rows) {
-        const values = columns.map((c) => escapeValue(row[c])).join(', ')
-        result.push(`INSERT INTO ${tableName} (${colList}) VALUES (${values});`)
-      }
-      result.push('')
-      return result
-    }
-
-    // ── INSERT (parent-first order) ───────────────────────────────────────────
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('-- DATA: auditors')
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push(...buildInserts('auditors', auditors as Record<string, unknown>[] | null))
-
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('-- DATA: institutions')
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push(...buildInserts('institutions', institutions as Record<string, unknown>[] | null))
-
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('-- DATA: aspects')
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push(...buildInserts('aspects', aspects as Record<string, unknown>[] | null))
-
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('-- DATA: indicators')
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push(...buildInserts('indicators', indicators as Record<string, unknown>[] | null))
-
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('-- DATA: assessments')
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push(...buildInserts('assessments', assessments as Record<string, unknown>[] | null))
-
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('-- DATA: assessment_document_reviews')
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push(...buildInserts('assessment_document_reviews', documentReviews as Record<string, unknown>[] | null))
-
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push('-- DATA: indicator_folder_mapping')
-    lines.push('-- ─────────────────────────────────────────────────────────')
-    lines.push(...buildInserts('indicator_folder_mapping', folderMappings as Record<string, unknown>[] | null))
+    // INSERT — parent-first
+    lines.push(...section('app_settings',                appSettings                as Record<string, unknown>[] | null))
+    lines.push(...section('auditors',                    auditors                   as Record<string, unknown>[] | null))
+    lines.push(...section('institutions',                institutions               as Record<string, unknown>[] | null))
+    lines.push(...section('weight_configurations',       weightConfigurations       as Record<string, unknown>[] | null))
+    lines.push(...section('aspects',                     aspects                    as Record<string, unknown>[] | null))
+    lines.push(...section('indicators',                  indicators                 as Record<string, unknown>[] | null))
+    lines.push(...section('aspect_weights',              aspectWeights              as Record<string, unknown>[] | null))
+    lines.push(...section('indicator_weights',           indicatorWeights           as Record<string, unknown>[] | null))
+    lines.push(...section('indicator_folder_mapping',   indicatorFolderMapping     as Record<string, unknown>[] | null))
+    lines.push(...section('assessments',                 assessments                as Record<string, unknown>[] | null))
+    lines.push(...section('institution_indicator_folders', institutionIndicatorFolders as Record<string, unknown>[] | null))
+    lines.push(...section('institution_notes',           institutionNotes           as Record<string, unknown>[] | null))
+    lines.push(...section('document_reviews',            documentReviews            as Record<string, unknown>[] | null))
 
     lines.push('-- ─────────────────────────────────────────────────────────')
     lines.push('-- COMMIT')
@@ -158,7 +168,6 @@ export async function GET() {
 
     const sqlContent = lines.join('\n')
 
-    // Return as downloadable SQL file
     return new NextResponse(sqlContent, {
       status: 200,
       headers: {

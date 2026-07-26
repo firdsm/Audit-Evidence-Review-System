@@ -123,13 +123,19 @@ export default function BackupClient({ userEmail, userName }: BackupClientProps)
             <p className="text-xs font-semibold text-zinc-300">Tabel yang dibackup:</p>
             <div className="grid grid-cols-2 gap-1.5">
               {[
+                'app_settings',
                 'auditors',
                 'institutions',
+                'weight_configurations',
                 'aspects',
                 'indicators',
-                'assessments',
-                'assessment_document_reviews',
+                'aspect_weights',
+                'indicator_weights',
                 'indicator_folder_mapping',
+                'assessments',
+                'institution_indicator_folders',
+                'institution_notes',
+                'document_reviews',
               ].map((tbl) => (
                 <div key={tbl} className="flex items-center gap-2 text-xs text-zinc-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/70 shrink-0" />
