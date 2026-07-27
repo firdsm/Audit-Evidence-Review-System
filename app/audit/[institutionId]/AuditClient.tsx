@@ -8,6 +8,7 @@ import { getEvidenceFilesAction, saveAssessmentAction, DocumentReviewInput } fro
 import FullscreenButton from '@/components/FullscreenButton'
 import ReferenceDatesPanel from '@/components/ReferenceDatesPanel'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
+import { ExportDropdown } from '@/components/ExportDropdown'
 import indicatorGuidance from '@/indicator-guidance.json'
 
 // Types from JSON guidance
@@ -332,7 +333,58 @@ export default function AuditClient({
     window.open(url, '_blank')
   }
 
-  // Export Temuan — document review checklist report
+
+
+  // Export Temuan — PDF handler (client-side)
+  const handleExportTemuanPDF = async () => {
+    try {
+      const { exportTemuanPDF } = await import('@/lib/export/temuan-pdf')
+
+      // Build TemuanAspect[] with requiredDocs from indicatorGuidance
+      const pdfAspects = aspects.map((aspect) => ({
+        id: aspect.id,
+        name: aspect.name,
+        indicators: aspect.indicators.map((ind) => {
+          const guidance = getGuidance(ind.code)
+          const requiredDocs = (guidance?.required_documents || []).map((doc) => ({
+            id: doc.id,
+            name: doc.name,
+            order: doc.order,
+          }))
+          return {
+            id: ind.id,
+            code: ind.code,
+            name: ind.name,
+            requiredDocs,
+          }
+        }),
+      }))
+
+      // Build assessmentReviewsMap: indicator_id -> TemuanReviewData[]
+      const assessmentReviewsMap = new Map<string, { documentId: string; checked: boolean; note: string | null }[]>()
+      assessments.forEach((assess) => {
+        const reviews = (assess.document_reviews || []).map((r) => ({
+          documentId: r.document_id,
+          checked: r.checked,
+          note: r.note,
+        }))
+        assessmentReviewsMap.set(assess.indicator_id, reviews)
+      })
+
+      exportTemuanPDF({
+        institutionName: institution.name,
+        aspects: pdfAspects,
+        assessmentReviewsMap,
+      })
+    } catch (err) {
+      console.error('Failed to export temuan to PDF:', err)
+      alert('Gagal mengekspor Lembar Temuan ke PDF')
+    } finally {
+      // Done
+    }
+  }
+
+  // Export Temuan — document review checklist report (Excel)
   const exportTemuan = () => {
     const url = `/api/export-temuan?institutionId=${encodeURIComponent(institution.id)}`
     window.open(url, '_blank')
@@ -347,7 +399,7 @@ export default function AuditClient({
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(120,119,198,0.05),transparent_50%)]" />
 
       {/* Header Bar */}
-      <header className="relative z-10 border-b border-zinc-800 bg-zinc-900/40 backdrop-blur-md px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 shrink-0">
+      <header className="relative z-50 border-b border-zinc-800 bg-zinc-900/40 backdrop-blur-md px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="text-zinc-400 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -376,16 +428,22 @@ export default function AuditClient({
               </svg>
               <span>Export Hasil Penilaian</span>
             </button>
-            <button
-              onClick={exportTemuan}
-              className="px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
-              title="Ekspor Pengecekan Dokumen Dukung ke Excel"
-            >
-              <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-              <span>Export Temuan</span>
-            </button>
+            {/* Export Temuan Dropdown (Excel / PDF) */}
+            <ExportDropdown
+              triggerClassName="px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 rounded-xl text-zinc-200 text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-black/20"
+              triggerContent={
+                <>
+                  <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  <span>Export Temuan</span>
+                </>
+              }
+              items={[
+                { label: 'Export Excel (.xlsx)', icon: 'excel', iconColor: 'text-emerald-400', onClick: exportTemuan },
+                { label: 'Export PDF (.pdf)',     icon: 'pdf',   iconColor: 'text-red-400',     onClick: handleExportTemuanPDF },
+              ]}
+            />
           </div>
 
           {saveStatus === 'saving' && (

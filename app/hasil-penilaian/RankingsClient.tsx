@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useTransition, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useTransition, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import UserDropdown from '@/components/UserDropdown'
 import FullscreenButton from '@/components/FullscreenButton'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
 import { CategorySelect } from '@/components/CategorySelect'
+import { ExportDropdown } from '@/components/ExportDropdown'
 
 interface RankingsClientProps {
   userEmail: string
@@ -292,6 +293,38 @@ export default function RankingsClient({
     red:     'FFFEE2E2',
     violet:  'FFEDE9FE',
     zinc:    'FFF4F4F5',
+  }
+
+
+
+  const handleExportPDF = async () => {
+    if (filteredRankings.length === 0) return
+    setExporting(true)
+    try {
+      const { exportRekapHasilPenilaianPDF } = await import('@/lib/export/rekap-hasil-penilaian-pdf')
+
+      const pdfData = sortedRankings.map((inst, idx) => {
+        const scoreCat = getScoreCategory(inst.totalScore)
+        const rankStr = inst.f02 !== null ? (inst.totalScore !== null ? `#${idx + 1}` : '-') : '-'
+        return {
+          rank: rankStr,
+          name: inst.name,
+          category: inst.category,
+          f02: inst.f02,
+          f03: inst.f03,
+          totalScore: inst.totalScore,
+          scoreKode: scoreCat.kode,
+          scoreMakna: scoreCat.makna,
+        }
+      })
+
+      exportRekapHasilPenilaianPDF(pdfData)
+    } catch (err) {
+      console.error('Failed to export to PDF:', err)
+      alert('Gagal mengekspor data ke PDF')
+    } finally {
+      setExporting(false)
+    }
   }
 
   // Export to Excel handler using exceljs
@@ -614,17 +647,22 @@ export default function RankingsClient({
               onChange={handleCategoryChange}
             />
 
-            {/* Export Excel Button (KANAN, Outline / Secondary Style) */}
-            <button
-              onClick={handleExportExcel}
+            {/* Export Excel / PDF Dropdown (KANAN, Outline / Secondary Style) */}
+            <ExportDropdown
               disabled={exporting || filteredRankings.length === 0}
-              className="h-9 flex items-center justify-center gap-2 px-3.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white disabled:bg-zinc-900/50 disabled:text-zinc-600 disabled:border-zinc-850 disabled:cursor-not-allowed border border-zinc-700/60 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
-            >
-              <svg className="w-4 h-4 text-emerald-400 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              {exporting ? 'Mengekspor...' : 'Export Daftar Instansi'}
-            </button>
+              triggerContent={
+                <>
+                  <svg className="w-4 h-4 text-emerald-400 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  {exporting ? 'Mengekspor...' : 'Export Daftar Instansi'}
+                </>
+              }
+              items={[
+                { label: 'Export Excel (.xlsx)', icon: 'excel', iconColor: 'text-emerald-400', onClick: handleExportExcel },
+                { label: 'Export PDF (.pdf)',     icon: 'pdf',   iconColor: 'text-red-400',     onClick: handleExportPDF },
+              ]}
+            />
           </div>
         </div>
 

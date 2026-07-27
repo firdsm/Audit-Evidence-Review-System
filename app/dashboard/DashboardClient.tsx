@@ -8,6 +8,7 @@ import UserDropdown from '@/components/UserDropdown'
 import FullscreenButton from '@/components/FullscreenButton'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
 import { CategorySelect } from '@/components/CategorySelect'
+import { ExportDropdown } from '@/components/ExportDropdown'
 
 interface DocCompleteness {
   okCount: number
@@ -96,6 +97,8 @@ export default function DashboardClient({
     }
   }, [])
 
+  const [activeRowExportMenuId, setActiveRowExportMenuId] = useState<string | null>(null)
+
   const handleExportTemuan = async (instId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     if (exportingId) return
@@ -105,6 +108,92 @@ export default function DashboardClient({
       window.open(url, '_blank')
     } finally {
       setTimeout(() => setExportingId(null), 1000)
+    }
+  }
+
+  const handleExportTemuanRowPDF = async (inst: InstitutionData, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (exportingId) return
+    setExportingId(inst.id)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+
+      // Fetch aspects with indicators
+      const { data: rawAspects } = await supabase
+        .from('aspects')
+        .select(`
+          id,
+          name,
+          order_number,
+          indicators (
+            id,
+            code,
+            name,
+            order_number
+          )
+        `)
+        .order('order_number')
+
+      // Fetch assessments with document_reviews
+      const { data: rawAssessments } = await supabase
+        .from('assessments')
+        .select(`
+          indicator_id,
+          document_reviews (
+            document_id,
+            checked,
+            note
+          )
+        `)
+        .eq('institution_id', inst.id)
+
+      const { default: indicatorGuidance } = await import('@/indicator-guidance.json')
+
+      // Build pdfAspects
+      const pdfAspects = (rawAspects || []).map((aspect: any) => ({
+        id: aspect.id,
+        name: aspect.name,
+        indicators: (aspect.indicators || [])
+          .sort((a: any, b: any) => a.order_number - b.order_number)
+          .map((ind: any) => {
+            const g = (indicatorGuidance as any[]).find((g) => g.indicator_code === ind.code)
+            const requiredDocs = (g?.required_documents || []).map((doc: any) => ({
+              id: doc.id,
+              name: doc.name,
+              order: doc.order,
+            }))
+            return {
+              id: ind.id,
+              code: ind.code,
+              name: ind.name,
+              requiredDocs,
+            }
+          }),
+      }))
+
+      // Build assessmentReviewsMap
+      const assessmentReviewsMap = new Map<string, { documentId: string; checked: boolean; note: string | null }[]>()
+      for (const a of rawAssessments || []) {
+        const reviews = ((a as any).document_reviews || []).map((r: any) => ({
+          documentId: r.document_id,
+          checked: r.checked,
+          note: r.note,
+        }))
+        assessmentReviewsMap.set(a.indicator_id, reviews)
+      }
+
+      const { exportTemuanPDF } = await import('@/lib/export/temuan-pdf')
+      exportTemuanPDF({
+        institutionName: inst.name,
+        aspects: pdfAspects,
+        assessmentReviewsMap,
+      })
+    } catch (err) {
+      console.error('Failed to export temuan PDF:', err)
+      alert('Gagal mengekspor Lembar Temuan ke PDF')
+    } finally {
+      setExportingId(null)
     }
   }
 
@@ -175,6 +264,22 @@ export default function DashboardClient({
       setSortDir(col === 'name' ? 'asc' : 'desc')
     }
     setCurrentPage(1)
+  }
+
+
+
+  const handleExportPDF = async () => {
+    if (filteredInstitutions.length === 0) return
+    setExportRekapLoading(true)
+    try {
+      const { exportRekapKelengkapanPDF } = await import('@/lib/export/rekap-kelengkapan-pdf')
+      exportRekapKelengkapanPDF(sortedInstitutions)
+    } catch (err) {
+      console.error('Failed to export to PDF:', err)
+      alert('Gagal mengekspor data ke PDF')
+    } finally {
+      setExportRekapLoading(false)
+    }
   }
 
   // Export Rekap Kelengkapan Dokumen Excel Handler using ExcelJS
@@ -469,24 +574,29 @@ export default function DashboardClient({
               onChange={handleCategoryChange}
             />
 
-            {/* Export Rekap Dokumen Button (KANAN, Outline / Secondary Style) */}
-            <button
-              onClick={handleExportRekapKelengkapan}
+            {/* Export Rekap Dokumen Dropdown (KANAN, Outline / Secondary Style) */}
+            <ExportDropdown
               disabled={exportRekapLoading || filteredInstitutions.length === 0}
-              className="h-9 flex items-center justify-center gap-2 px-3.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white disabled:bg-zinc-900/50 disabled:text-zinc-600 disabled:border-zinc-850 disabled:cursor-not-allowed border border-zinc-700/60 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
-            >
-              <svg className="w-4 h-4 text-emerald-400 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              {exportRekapLoading ? 'Mengekspor...' : 'Export Daftar Instansi'}
-            </button>
+              triggerContent={
+                <>
+                  <svg className="w-4 h-4 text-emerald-400 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  {exportRekapLoading ? 'Mengekspor...' : 'Export Daftar Instansi'}
+                </>
+              }
+              items={[
+                { label: 'Export Excel (.xlsx)', icon: 'excel', iconColor: 'text-emerald-400', onClick: handleExportRekapKelengkapan },
+                { label: 'Export PDF (.pdf)',     icon: 'pdf',   iconColor: 'text-red-400',     onClick: handleExportPDF },
+              ]}
+            />
           </div>
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────
             4. INSTITUTIONS TABLE — normal flow, scroll di bawah filter
         ──────────────────────────────────────────────────────────────────── */}
-        <div className="bg-zinc-900/20 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-md">
+        <div className="bg-zinc-900/20 border border-zinc-800/80 rounded-2xl backdrop-blur-md">
           {sortedInstitutions.length === 0 ? (
             <div className="p-8 text-center text-zinc-500 space-y-2">
               <svg className="w-12 h-12 mx-auto opacity-30 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,7 +606,7 @@ export default function DashboardClient({
               <p className="text-xs">Coba bersihkan filter pencarian atau sinkronisasikan instansi dari Google Drive.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-visible rounded-2xl">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 text-zinc-400 font-semibold bg-zinc-900/10">
@@ -618,24 +728,27 @@ export default function DashboardClient({
                           )}
                         </td>
                         <td className="py-2.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={(e) => handleExportTemuan(inst.id, e)}
+                          <ExportDropdown
                             disabled={isExportingThis}
-                            title={`Unduh Export Temuan — ${inst.name}`}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-800 hover:bg-blue-600/20 hover:border-blue-500/40 border border-zinc-700/80 text-zinc-400 hover:text-blue-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm"
-                          >
-                            {isExportingThis ? (
-                              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                              </svg>
-                            ) : (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                            )}
-                          </button>
+                            showChevron={false}
+                            triggerClassName="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-800 hover:bg-blue-600/20 hover:border-blue-500/40 border border-zinc-700/80 text-zinc-400 hover:text-blue-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+                            triggerContent={
+                              isExportingThis ? (
+                                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                              )
+                            }
+                            items={[
+                              { label: 'Export Excel (.xlsx)', icon: 'excel', iconColor: 'text-emerald-400', onClick: () => handleExportTemuan(inst.id, new MouseEvent('click') as unknown as React.MouseEvent) },
+                              { label: 'Export PDF (.pdf)',     icon: 'pdf',   iconColor: 'text-red-400',     onClick: () => handleExportTemuanRowPDF(inst, new MouseEvent('click') as unknown as React.MouseEvent) },
+                            ]}
+                          />
                         </td>
                       </tr>
                     )
