@@ -8,6 +8,7 @@ import FullscreenButton from '@/components/FullscreenButton'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
 import { CategorySelect } from '@/components/CategorySelect'
 import { ExportDropdown } from '@/components/ExportDropdown'
+import { BulkExportHasilAuditButton } from '@/components/BulkExportHasilAuditButton'
 
 interface RankingsClientProps {
   userEmail: string
@@ -663,6 +664,19 @@ export default function RankingsClient({
                 { label: 'Export PDF (.pdf)',     icon: 'pdf',   iconColor: 'text-red-400',     onClick: handleExportPDF },
               ]}
             />
+
+            {/* Bulk Export Semua Kertas Kerja — superadmin only */}
+            {isSuperAdmin && (
+              <BulkExportHasilAuditButton
+                disabled={loading || rankings.length === 0}
+                institutions={rankings.map((r) => ({
+                  id: r.institutionId,
+                  name: r.name,
+                  category: r.category,
+                  isPriority: r.isPriority,
+                }))}
+              />
+            )}
           </div>
         </div>
 
