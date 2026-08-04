@@ -12,6 +12,36 @@ interface Category {
   color: string
 }
 
+export const HOLOGRAM_STYLE: React.CSSProperties = {
+  background: [
+    'linear-gradient(135deg,',
+    '#4b5563 0%,',    /* steel dark */
+    '#9ca3af 15%,',   /* mid silver */
+    '#f3f4f6 30%,',   /* near white */
+    '#ffffff 45%,',   /* diamond white */
+    '#d1d5db 55%,',   /* light silver */
+    '#6b7280 70%,',   /* mid steel */
+    '#e5e7eb 85%,',   /* platinum */
+    '#374151 100%',   /* steel dark */
+    ')',
+  ].join(' '),
+  backgroundSize: '300% 300%',
+  color: '#111827',
+  fontWeight: 800,
+  letterSpacing: '0.025em',
+  borderColor: 'rgba(255, 255, 255, 0.95)',
+  boxShadow: [
+    '0 0 6px 1px rgba(255, 255, 255, 0.75)',
+    '0 0 12px 2px rgba(209, 213, 219, 0.55)',
+    '0 0 22px 4px rgba(156, 163, 175, 0.30)',
+    'inset 0 1px 3px rgba(255, 255, 255, 1)',
+    'inset 0 -1px 2px rgba(0, 0, 0, 0.25)',
+  ].join(', '),
+  textShadow: '0 1px 1px rgba(255, 255, 255, 1)',
+  overflow: 'hidden',
+  borderRadius: '8px',
+}
+
 // Preset color options matching Tailwind configurations
 const COLOR_PRESETS = [
   { key: 'red', name: 'Merah', bg: 'bg-red-500/20 text-red-400 border-red-500/30' },
@@ -21,6 +51,7 @@ const COLOR_PRESETS = [
   { key: 'blue', name: 'Biru', bg: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
   { key: 'violet', name: 'Ungu/Violet', bg: 'bg-violet-500/20 text-violet-400 border-violet-500/30' },
   { key: 'zinc', name: 'Abu-Abu', bg: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30' },
+  { key: 'hologram', name: '✨ Hologram Rainbow', bg: 'animate-hologram' },
 ]
 
 export default function ValueCategoriesClient() {
@@ -469,6 +500,7 @@ export default function ValueCategoriesClient() {
                           <td className="px-5 py-4 text-center">
                             <span
                               className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold ${colorPreset.bg}`}
+                              style={cat.color === 'hologram' ? HOLOGRAM_STYLE : undefined}
                               title={cat.makna}
                             >
                               {cat.kode}

@@ -9,6 +9,7 @@ import AnnouncementBanner from '@/components/AnnouncementBanner'
 import { CategorySelect } from '@/components/CategorySelect'
 import { ExportDropdown } from '@/components/ExportDropdown'
 import { BulkExportHasilAuditButton } from '@/components/BulkExportHasilAuditButton'
+import { HOLOGRAM_STYLE } from '@/app/admin/value-categories/ValueCategoriesClient'
 
 interface RankingsClientProps {
   userEmail: string
@@ -46,6 +47,7 @@ const COLOR_CLASSES: Record<string, string> = {
   blue: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
   violet: 'bg-violet-500/15 text-violet-400 border-violet-500/25',
   zinc: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/25',
+  hologram: 'badge-hologram',
 }
 
 const PAGE_SIZE = 15
@@ -168,17 +170,18 @@ export default function RankingsClient({
   }, [filterMode, selectedCategory])
 
   // Helper function to find category classification for a given score
-  const getScoreCategory = (score: number | null): { kode: string; makna: string; class: string } => {
-    if (score === null) return { kode: '-', makna: 'Belum Terkategori', class: COLOR_CLASSES.zinc }
+  const getScoreCategory = (score: number | null): { kode: string; makna: string; class: string; isHologram: boolean } => {
+    if (score === null) return { kode: '-', makna: 'Belum Terkategori', class: COLOR_CLASSES.zinc, isHologram: false }
     const match = valueCategories.find((c) => score >= c.min_score && score <= c.max_score)
     if (match) {
       return {
         kode: match.kode,
         makna: match.makna,
         class: COLOR_CLASSES[match.color] || COLOR_CLASSES.zinc,
+        isHologram: match.color === 'hologram',
       }
     }
-    return { kode: '-', makna: 'Belum Terkategori', class: COLOR_CLASSES.zinc }
+    return { kode: '-', makna: 'Belum Terkategori', class: COLOR_CLASSES.zinc, isHologram: false }
   };
 
   // Filter rankings by search query in real-time
@@ -294,6 +297,7 @@ export default function RankingsClient({
     red:     'FFFEE2E2',
     violet:  'FFEDE9FE',
     zinc:    'FFF4F4F5',
+    hologram:'FFEDE9FE', // Soft violet accent for Excel fallback
   }
 
 
@@ -815,7 +819,10 @@ export default function RankingsClient({
                             </td>
                             <td className="px-5 py-2.5 text-center">
                               <span
-                                className={`inline-flex px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-default ${scoreCat.class}`}
+                                className={`inline-flex px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-default ${
+                                  scoreCat.isHologram ? 'animate-hologram' : scoreCat.class
+                                }`}
+                                style={scoreCat.isHologram ? HOLOGRAM_STYLE : undefined}
                                 title={scoreCat.makna}
                               >
                                 {scoreCat.kode}
@@ -886,7 +893,10 @@ export default function RankingsClient({
                       </span>
                       {inst.f02 !== null ? (
                         <span
-                          className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${scoreCat.class}`}
+                          className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${
+                            scoreCat.isHologram ? 'animate-hologram' : scoreCat.class
+                          }`}
+                          style={scoreCat.isHologram ? HOLOGRAM_STYLE : undefined}
                           title={scoreCat.makna}
                         >
                           {scoreCat.kode}
@@ -943,7 +953,10 @@ export default function RankingsClient({
                           {inst.f02 !== null ? (
                             <>
                               <span
-                                className={`shrink-0 px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${scoreCat.class}`}
+                                className={`shrink-0 px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${
+                                  scoreCat.isHologram ? 'animate-hologram' : scoreCat.class
+                                }`}
+                                style={scoreCat.isHologram ? HOLOGRAM_STYLE : undefined}
                               >
                                 {scoreCat.kode}
                               </span>

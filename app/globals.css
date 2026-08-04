@@ -37,3 +37,50 @@ body {
   background: #27272a; /* matches border-zinc-800 */
 }
 
+/* Silver Diamond Metallic Badge */
+@keyframes silverBreath {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes diamondGlint {
+  0%, 20%  { background-position: 220% 0; opacity: 0; }
+  30%      { opacity: 1; }
+  55%      { background-position: -20% 0; opacity: 1; }
+  65%, 100%{ background-position: -20% 0; opacity: 0; }
+}
+
+.animate-hologram {
+  position: relative !important;
+  overflow: hidden !important;
+  clip-path: inset(0 round 8px) !important;
+  isolation: isolate !important;
+  background-size: 300% 300% !important;
+  animation: silverBreath 2s ease-in-out infinite !important;
+}
+
+/* Diamond-white specular glint — the "spark" that makes it noticeable */
+.animate-hologram::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  background: linear-gradient(
+    108deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.25) 42%,
+    rgba(255, 255, 255, 1.00) 50%,
+    rgba(255, 255, 255, 0.25) 58%,
+    transparent 70%
+  ) !important;
+  background-size: 250% 100% !important;
+  mix-blend-mode: screen !important;
+  animation: diamondGlint 2.2s ease-in-out infinite !important;
+  pointer-events: none !important;
+}
+
+
+
+
+
