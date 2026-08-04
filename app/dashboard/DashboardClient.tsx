@@ -9,6 +9,7 @@ import FullscreenButton from '@/components/FullscreenButton'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
 import { CategorySelect } from '@/components/CategorySelect'
 import { ExportDropdown } from '@/components/ExportDropdown'
+import { BulkExportTemuanButton } from '@/components/BulkExportTemuanButton'
 
 interface DocCompleteness {
   okCount: number
@@ -590,6 +591,11 @@ export default function DashboardClient({
                 { label: 'Export PDF (.pdf)',     icon: 'pdf',   iconColor: 'text-red-400',     onClick: handleExportPDF },
               ]}
             />
+
+            {/* Bulk Export Semua Temuan — superadmin only */}
+            {isSuperAdmin && (
+              <BulkExportTemuanButton institutions={institutions} />
+            )}
           </div>
         </div>
 
