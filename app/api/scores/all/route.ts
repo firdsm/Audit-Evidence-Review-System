@@ -59,15 +59,30 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // 2. Fetch all scores via SQL view/function (F-02 in scale 1-5)
-  const { data: rows, error: rpcErr } = await supabase.rpc('calculate_institution_scores', {
-    p_institution_id: null,
-  })
+  // 2. Fetch ALL scores via SQL function using paginated loop.
+  // Supabase PostgREST enforces a server-side max_rows cap (default 1000) that silently
+  // truncates results. .range() sends offset+limit params but the server still won't
+  // return more than max_rows per request. We work around this by paginating in a loop:
+  // fetch 1000 rows at a time until the page is smaller than PAGE_SIZE (end of results).
+  const PAGE_SIZE = 1000
+  const rows: any[] = []
+  let offset = 0
+  while (true) {
+    const { data: page, error: rpcErr } = await supabase
+      .rpc('calculate_institution_scores', { p_institution_id: null })
+      .range(offset, offset + PAGE_SIZE - 1)
 
-  if (rpcErr) {
-    console.error('[scores/all] RPC error:', rpcErr)
-    return NextResponse.json({ error: rpcErr.message }, { status: 500 })
+    if (rpcErr) {
+      console.error('[scores/all] RPC error:', rpcErr)
+      return NextResponse.json({ error: rpcErr.message }, { status: 500 })
+    }
+
+    if (!page || page.length === 0) break
+    rows.push(...page)
+    if (page.length < PAGE_SIZE) break  // last page — no more data
+    offset += PAGE_SIZE
   }
+
 
   // Note: rows may be empty if NO institution has been assessed yet.
   // We still need to run the fallback below to include unassessed institutions.
@@ -177,18 +192,22 @@ export async function GET(request: NextRequest) {
       aspects: [...inst.aspects.values()].sort((a, b) => a.aspectOrder - b.aspectOrder),
     }))
     .sort((a, b) => {
-      // 1. Unassessed (f02 === null) always go to the bottom
-      if (a.f02 === null && b.f02 !== null) return 1
-      if (a.f02 !== null && b.f02 === null) return -1
-      if (a.f02 === null && b.f02 === null) return 0
+      // 1. Unassessed (f02 === null or undefined) always go to the bottom
+      const aUnassessed = a.f02 === null || a.f02 === undefined
+      const bUnassessed = b.f02 === null || b.f02 === undefined
+      if (aUnassessed && !bUnassessed) return 1
+      if (!aUnassessed && bUnassessed) return -1
+      if (aUnassessed && bUnassessed) return 0
 
       // 2. Float NULL totalScore (e.g. F-03 not filled yet) to the bottom of assessed list but above unassessed
-      if (a.totalScore === null && b.totalScore !== null) return 1
-      if (a.totalScore !== null && b.totalScore === null) return -1
-      if (a.totalScore === null && b.totalScore === null) return 0
+      const aNoTotal = a.totalScore === null || a.totalScore === undefined
+      const bNoTotal = b.totalScore === null || b.totalScore === undefined
+      if (aNoTotal && !bNoTotal) return 1
+      if (!aNoTotal && bNoTotal) return -1
+      if (aNoTotal && bNoTotal) return 0
 
       // 3. Otherwise sort by totalScore DESC
-      return (b.totalScore || 0) - (a.totalScore || 0)
+      return (b.totalScore ?? 0) - (a.totalScore ?? 0)
     })
 
   return NextResponse.json({

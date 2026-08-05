@@ -170,9 +170,16 @@ export default function RankingsClient({
   }, [filterMode, selectedCategory])
 
   // Helper function to find category classification for a given score
-  const getScoreCategory = (score: number | null): { kode: string; makna: string; class: string; isHologram: boolean } => {
-    if (score === null) return { kode: '-', makna: 'Belum Terkategori', class: COLOR_CLASSES.zinc, isHologram: false }
-    const match = valueCategories.find((c) => score >= c.min_score && score <= c.max_score)
+  const getScoreCategory = (score: number | null | undefined): { kode: string; makna: string; class: string; isHologram: boolean } => {
+    if (score === null || score === undefined) return { kode: '-', makna: 'Belum Terkategori', class: COLOR_CLASSES.zinc, isHologram: false }
+    let match = valueCategories.find((c) => score >= c.min_score && score <= c.max_score)
+    if (!match && valueCategories.length > 0) {
+      // Fallback for score 0 or below lowest min_score
+      const lowestCat = [...valueCategories].sort((a, b) => a.min_score - b.min_score)[0]
+      if (score <= lowestCat.min_score) {
+        match = lowestCat
+      }
+    }
     if (match) {
       return {
         kode: match.kode,
@@ -195,9 +202,11 @@ export default function RankingsClient({
   const sortedRankings = useMemo(() => {
     return [...filteredRankings].sort((a, b) => {
       // Always push unassessed to bottom regardless of sort direction
-      if (a.f02 === null && b.f02 !== null) return 1
-      if (a.f02 !== null && b.f02 === null) return -1
-      if (a.f02 === null && b.f02 === null) return a.name.localeCompare(b.name)
+      const aUnassessed = a.f02 === null || a.f02 === undefined
+      const bUnassessed = b.f02 === null || b.f02 === undefined
+      if (aUnassessed && !bUnassessed) return 1
+      if (!aUnassessed && bUnassessed) return -1
+      if (aUnassessed && bUnassessed) return a.name.localeCompare(b.name)
 
       let cmp = 0
       if (sortCol === 'name') {
@@ -309,7 +318,7 @@ export default function RankingsClient({
       const { exportRekapHasilPenilaianPDF } = await import('@/lib/export/rekap-hasil-penilaian-pdf')
 
       const pdfData = sortedRankings.map((inst, idx) => {
-        const scoreCat = getScoreCategory(inst.totalScore)
+        const scoreCat = getScoreCategory(inst.totalScore ?? inst.f02)
         const rankStr = inst.f02 !== null ? (inst.totalScore !== null ? `#${idx + 1}` : '-') : '-'
         return {
           rank: rankStr,
@@ -403,19 +412,20 @@ export default function RankingsClient({
 
       // ── Data rows ────────────────────────────────────────────────────────
       sortedRankings.forEach((inst, idx) => {
-        const scoreCat = getScoreCategory(inst.totalScore)
+        const scoreCat = getScoreCategory(inst.totalScore ?? inst.f02)
         const isEven = idx % 2 === 1
         const rowBg = isEven ? 'FFF1F5F9' : 'FFFFFFFF'
 
+        const isAssessed = inst.f02 !== null && inst.f02 !== undefined
         const row = worksheet.addRow({
-          rank:       inst.f02 !== null ? (inst.totalScore !== null ? idx + 1 : '-') : '-',
+          rank:       isAssessed ? (inst.totalScore !== null && inst.totalScore !== undefined ? idx + 1 : '-') : '-',
           name:       inst.name,
           category:   inst.category,
-          f02:        inst.f02 !== null ? parseFloat(inst.f02.toFixed(2)) : 'Belum dilakukan penilaian',
-          f03:        inst.f02 !== null ? (inst.f03 !== null ? parseFloat(inst.f03.toFixed(2)) : 'Belum Diisi') : '-',
-          totalScore: inst.f02 !== null ? (inst.totalScore !== null ? parseFloat(inst.totalScore.toFixed(2)) : '-') : 'Belum dilakukan penilaian',
-          scoreKode:  inst.f02 !== null ? (scoreCat.kode !== '-' ? scoreCat.kode : '-') : 'Belum dilakukan penilaian',
-          scoreMakna: inst.f02 !== null ? (scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : '-') : 'Belum dilakukan penilaian',
+          f02:        isAssessed ? parseFloat(inst.f02!.toFixed(2)) : 'Belum dilakukan penilaian',
+          f03:        isAssessed ? (inst.f03 !== null && inst.f03 !== undefined ? parseFloat(inst.f03!.toFixed(2)) : 'Belum Diisi') : '-',
+          totalScore: isAssessed ? (inst.totalScore !== null && inst.totalScore !== undefined ? parseFloat(inst.totalScore!.toFixed(2)) : '-') : 'Belum dilakukan penilaian',
+          scoreKode:  isAssessed ? (scoreCat.kode !== '-' ? scoreCat.kode : '-') : 'Belum dilakukan penilaian',
+          scoreMakna: isAssessed ? (scoreCat.makna !== 'Belum Terkategori' ? scoreCat.makna : '-') : 'Belum dilakukan penilaian',
         })
         row.height = 18
 
@@ -764,7 +774,7 @@ export default function RankingsClient({
                   {paginatedRankings.map((inst) => {
                     const globalIdx = sortedRankings.indexOf(inst)
                     const rank = inst.f02 !== null ? globalIdx + 1 : null
-                    const scoreCat = getScoreCategory(inst.totalScore)
+                    const scoreCat = getScoreCategory(inst.totalScore ?? inst.f02)
 
                     return (
                       <tr
@@ -798,13 +808,13 @@ export default function RankingsClient({
                             {inst.name}
                           </span>
                         </td>
-                        {inst.f02 !== null ? (
+                        {inst.f02 !== null && inst.f02 !== undefined ? (
                           <>
                             <td className="px-5 py-2.5 text-center font-medium text-zinc-300">
                               {inst.f02.toFixed(2)}
                             </td>
                             <td className="px-5 py-2.5 text-center">
-                              {inst.f03 !== null ? (
+                              {inst.f03 !== null && inst.f03 !== undefined ? (
                                 <span className="font-medium text-zinc-350">{inst.f03.toFixed(2)}</span>
                               ) : (
                                 <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/25 text-red-400 text-[9px] font-bold uppercase rounded-md">
@@ -814,7 +824,7 @@ export default function RankingsClient({
                             </td>
                             <td className="px-5 py-2.5 text-center">
                               <span className="font-extrabold text-white">
-                                {inst.totalScore !== null ? inst.totalScore.toFixed(2) : '-'}
+                                {inst.totalScore !== null && inst.totalScore !== undefined ? inst.totalScore.toFixed(2) : '-'}
                               </span>
                             </td>
                             <td className="px-5 py-2.5 text-center">
@@ -872,7 +882,7 @@ export default function RankingsClient({
               {paginatedRankings.map((inst) => {
                 const globalIdx = sortedRankings.indexOf(inst)
                 const rank = inst.f02 !== null ? globalIdx + 1 : null
-                const scoreCat = getScoreCategory(inst.totalScore)
+                const scoreCat = getScoreCategory(inst.totalScore ?? inst.f02)
 
                 return (
                   <div
@@ -916,15 +926,15 @@ export default function RankingsClient({
                       <div className="flex justify-between">
                         <span className="text-zinc-500">Skor F-02:</span>
                         <span className="font-semibold text-zinc-300">
-                          {inst.f02 !== null ? inst.f02.toFixed(2) : (
+                          {inst.f02 !== null && inst.f02 !== undefined ? inst.f02.toFixed(2) : (
                             <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
                           )}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-zinc-500">Skor F-03:</span>
-                        {inst.f02 !== null ? (
-                          inst.f03 !== null ? (
+                        {inst.f02 !== null && inst.f02 !== undefined ? (
+                          inst.f03 !== null && inst.f03 !== undefined ? (
                             <span className="font-semibold text-zinc-300">{inst.f03.toFixed(2)}</span>
                           ) : (
                             <span className="px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-bold uppercase rounded">
@@ -939,8 +949,8 @@ export default function RankingsClient({
                         <span className="text-zinc-400 font-semibold">Nilai Akhir:</span>
                         <div className="flex items-center gap-1.5">
                           <span className="font-extrabold text-white text-sm">
-                            {inst.f02 !== null ? (
-                              inst.totalScore !== null ? inst.totalScore.toFixed(2) : '-'
+                            {inst.f02 !== null && inst.f02 !== undefined ? (
+                              inst.totalScore !== null && inst.totalScore !== undefined ? inst.totalScore.toFixed(2) : '-'
                             ) : (
                               <span className="text-zinc-500 text-xs italic">Belum dilakukan penilaian</span>
                             )}
@@ -950,7 +960,7 @@ export default function RankingsClient({
                       <div className="flex justify-between items-center gap-3 pt-1.5 border-t border-zinc-850">
                         <span className="text-zinc-400 font-semibold shrink-0">Kategori Nilai:</span>
                         <div className="flex items-center gap-2 min-w-0">
-                          {inst.f02 !== null ? (
+                          {inst.f02 !== null && inst.f02 !== undefined ? (
                             <>
                               <span
                                 className={`shrink-0 px-2 py-0.5 rounded-lg border text-[9px] font-bold cursor-default ${

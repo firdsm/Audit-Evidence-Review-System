@@ -55,17 +55,18 @@ export function exportRekapHasilPenilaianPDF(rankings: RankedInstitutionPDFData[
   ]
 
   const tableData = rankings.map((inst) => {
-    const f02Str = inst.f02 !== null ? inst.f02.toFixed(2) : 'Belum dilakukan penilaian'
-    const f03Str = inst.f02 !== null ? (inst.f03 !== null ? inst.f03.toFixed(2) : 'Belum Diisi') : '-'
+    const isAssessed = inst.f02 !== null && inst.f02 !== undefined
+    const f02Str = isAssessed ? inst.f02!.toFixed(2) : 'Belum dilakukan penilaian'
+    const f03Str = isAssessed ? (inst.f03 !== null && inst.f03 !== undefined ? inst.f03.toFixed(2) : 'Belum Diisi') : '-'
     const totalScoreStr =
-      inst.f02 !== null
-        ? inst.totalScore !== null
+      isAssessed
+        ? inst.totalScore !== null && inst.totalScore !== undefined
           ? inst.totalScore.toFixed(2)
           : '-'
         : 'Belum dilakukan penilaian'
-    const kodeStr = inst.f02 !== null ? (inst.scoreKode !== '-' ? inst.scoreKode : '-') : 'Belum dilakukan penilaian'
+    const kodeStr = isAssessed ? (inst.scoreKode !== '-' ? inst.scoreKode : '-') : 'Belum dilakukan penilaian'
     const maknaStr =
-      inst.f02 !== null ? (inst.scoreMakna !== 'Belum Terkategori' ? inst.scoreMakna : '-') : 'Belum dilakukan penilaian'
+      isAssessed ? (inst.scoreMakna !== 'Belum Terkategori' ? inst.scoreMakna : '-') : 'Belum dilakukan penilaian'
 
     return [
       inst.rank,
