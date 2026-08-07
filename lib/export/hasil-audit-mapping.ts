@@ -18,6 +18,19 @@ export const CELL_F03_SCORE = 'J6'
 export const TEMPLATE_SHEET_NAME = 'Kertas Kerja' // ← sesuaikan jika nama sheet berbeda
 
 /**
+ * Mapping aspect order_number → cell coordinate (di Kolom E)
+ * Format: order_number: 'CELL_ADDRESS'
+ */
+export const ASPECT_LINK_MAPPING: Record<number, string> = {
+  1: 'E7',  // I. KEBIJAKAN PELAYANAN
+  2: 'E17', // II. PROFESIONALISME SDM
+  3: 'E23', // III. SARANA PRASARANA
+  4: 'E30', // IV. SISTEM INFORMASI PELAYANAN PUBLIK
+  5: 'E35', // V. KONSULTASI DAN PENGADUAN
+  6: 'E40', // VI. INOVASI
+}
+
+/**
  * Mapping indicator code → cell coordinate (untuk NILAI/SCORE saja)
  *
  * Format: 'KODE_INDIKATOR': 'CELL_ADDRESS'

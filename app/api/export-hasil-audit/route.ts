@@ -3,12 +3,15 @@ import ExcelJS from 'exceljs'
 import fs from 'fs/promises'
 import path from 'path'
 import { createClient } from '@/lib/supabase/server'
+import { listFoldersInFolder } from '@/lib/google-drive'
+import { matchAspectFolder } from '@/lib/drive-utils'
 import {
   CELL_NAMA_INSTANSI,
   CELL_LINK_DRIVE,
   CELL_F03_SCORE,
   TEMPLATE_SHEET_NAME,
   INDICATOR_SCORE_MAPPING,
+  ASPECT_LINK_MAPPING,
 } from '@/lib/export/hasil-audit-mapping'
 
 export async function GET(request: NextRequest) {
@@ -66,10 +69,29 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 3. Fetch all indicators (we need code + id mapping)
-    const { data: indicators, error: indError } = await supabase
-      .from('indicators')
-      .select('id, code')
+    // 3. Fetch indicators, assessments, indicator folders, and aspects in parallel
+    const [
+      { data: indicators, error: indError },
+      { data: assessments, error: assessError },
+      { data: indicatorFolders, error: folderError },
+      { data: aspects, error: aspectError },
+    ] = await Promise.all([
+      supabase
+        .from('indicators')
+        .select('id, code'),
+      supabase
+        .from('assessments')
+        .select('indicator_id, score')
+        .eq('institution_id', institutionId),
+      supabase
+        .from('institution_indicator_folders')
+        .select('indicator_id, drive_folder_id')
+        .eq('institution_id', institutionId),
+      supabase
+        .from('aspects')
+        .select('id, name, order_number')
+        .order('order_number', { ascending: true }),
+    ])
 
     if (indError || !indicators) {
       return NextResponse.json(
@@ -78,17 +100,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 4. Fetch assessments for this institution
-    const { data: assessments, error: assessError } = await supabase
-      .from('assessments')
-      .select('indicator_id, score')
-      .eq('institution_id', institutionId)
-
     if (assessError) {
       return NextResponse.json(
         { error: 'Gagal memuat data penilaian' },
         { status: 500 }
       )
+    }
+
+    if (folderError) {
+      console.warn('Warning: Gagal memuat data indicator folders:', folderError.message)
+    }
+
+    if (aspectError) {
+      console.warn('Warning: Gagal memuat data aspects:', aspectError.message)
+    }
+
+    // 4. Fetch aspect folders directly from Google Drive if institution root folder is available
+    let sortedAspectFolders: Array<{ id?: string | null; name?: string | null }> = []
+    if (institution.drive_folder_id) {
+      try {
+        const rawFolders = await listFoldersInFolder(institution.drive_folder_id)
+        sortedAspectFolders = rawFolders
+          .filter((f) => f.id && f.name)
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      } catch (err: any) {
+        console.warn('Warning: Gagal mengambil aspect folders dari Drive:', err.message)
+      }
     }
 
     // 5. Load template file
@@ -124,7 +161,7 @@ export async function GET(request: NextRequest) {
     // 7. Fill institution name
     worksheet.getCell(CELL_NAMA_INSTANSI).value = institution.name
 
-    // 8. Fill Drive link as clickable hyperlink
+    // 8. Fill Root Drive link as clickable hyperlink
     if (institution.drive_folder_id) {
       const driveUrl = `https://drive.google.com/drive/folders/${institution.drive_folder_id}`
       worksheet.getCell(CELL_LINK_DRIVE).value = {
@@ -132,32 +169,70 @@ export async function GET(request: NextRequest) {
         hyperlink: driveUrl,
       } as ExcelJS.CellHyperlinkValue
     }
-    // If drive_folder_id is null, leave the cell empty (don't write anything)
 
     // 8.b Fill F-03 Score if available
     if (f03Row && f03Row.score !== null && f03Row.score !== undefined) {
       worksheet.getCell(CELL_F03_SCORE).value = Number(f03Row.score)
     }
 
-    // 9. Build lookup: indicator code → assessment score
+    // 8.c Fill Aspect Drive links into header cells (E7, E17, E23, E30, E35, E40)
+    if (aspects && aspects.length > 0) {
+      for (const aspect of aspects) {
+        const aspectCellAddress = ASPECT_LINK_MAPPING[aspect.order_number]
+        if (!aspectCellAddress) continue
+
+        const matchedAspect = matchAspectFolder(sortedAspectFolders, aspect.order_number)
+        const aspectFolderId = matchedAspect?.id || institution.drive_folder_id
+
+        if (aspectFolderId) {
+          const driveUrl = `https://drive.google.com/drive/folders/${aspectFolderId}`
+          worksheet.getCell(aspectCellAddress).value = {
+            text: driveUrl,
+            hyperlink: driveUrl,
+          } as ExcelJS.CellHyperlinkValue
+        }
+      }
+    }
+
+    // 9. Build lookups:
+    //    indicator code → indicator id
+    //    indicator id   → assessment score
+    //    indicator id   → drive folder id
     const codeToId = new Map(indicators.map((ind) => [ind.code, ind.id]))
     const idToScore = new Map(
       (assessments || []).map((a) => [a.indicator_id, a.score])
     )
+    const idToFolder = new Map(
+      (indicatorFolders || []).map((f) => [f.indicator_id, f.drive_folder_id])
+    )
 
-    // 10. Fill scores per indicator based on mapping
-    for (const [indicatorCode, cellAddress] of Object.entries(INDICATOR_SCORE_MAPPING)) {
+    // 10. Fill scores and Drive links per indicator based on mapping
+    for (const [indicatorCode, scoreCellAddress] of Object.entries(INDICATOR_SCORE_MAPPING)) {
       const indicatorId = codeToId.get(indicatorCode)
       if (!indicatorId) continue // Unknown indicator code, skip
 
+      // A. Fill score (Column H)
       const score = idToScore.get(indicatorId)
-
       if (score != null) {
-        // Write numeric score value
-        worksheet.getCell(cellAddress).value = score
+        worksheet.getCell(scoreCellAddress).value = score
       }
-      // If score is null/undefined → SKIP, leave cell empty
-      // This ensures template formulas (SUM/AVERAGE) don't get polluted
+
+      // B. Fill Drive link (Column E)
+      // Extract row number from score cell address (e.g., 'H8' -> row 8 -> cell 'E8')
+      const rowMatch = scoreCellAddress.match(/\d+/)
+      if (rowMatch) {
+        const rowNumber = rowMatch[0]
+        const linkCellAddress = `E${rowNumber}`
+        const specificFolderId = idToFolder.get(indicatorId) || institution.drive_folder_id
+
+        if (specificFolderId) {
+          const driveUrl = `https://drive.google.com/drive/folders/${specificFolderId}`
+          worksheet.getCell(linkCellAddress).value = {
+            text: driveUrl,
+            hyperlink: driveUrl,
+          } as ExcelJS.CellHyperlinkValue
+        }
+      }
     }
 
     // 11. Generate output buffer
