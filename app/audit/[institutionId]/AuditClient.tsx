@@ -656,17 +656,18 @@ export default function AuditClient({
                             )}
                           </>
                         ) : (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className={`text-[10px] font-bold ${active ? 'text-white' : 'text-zinc-300'}`}>
+                          <div className="flex items-center justify-center w-full py-1">
+                            <span
+                              className={`text-[11px] tracking-tight ${
+                                active
+                                  ? 'text-white font-extrabold'
+                                  : completed
+                                  ? 'text-emerald-400 font-extrabold'
+                                  : 'text-zinc-400 font-medium'
+                              }`}
+                            >
                               {ind.code.replace('IND-', '')}
                             </span>
-                            {completed && (
-                              <span className={`shrink-0 ${active ? 'text-white' : 'text-green-500'}`}>
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </span>
-                            )}
                           </div>
                         )}
                       </button>
@@ -941,14 +942,17 @@ export default function AuditClient({
             {/* ── DESKTOP RESIZABLE DIVIDER HANDLE ── */}
             <div
               onMouseDown={startResizing}
-              className={`hidden md:flex w-2.5 hover:w-3 -mx-1 z-20 cursor-col-resize select-none items-center justify-center transition-all duration-150 group shrink-0 ${
-                isResizing
-                  ? 'bg-blue-500/80 shadow-lg shadow-blue-500/30'
-                  : 'bg-zinc-800/80 hover:bg-blue-500/50'
-              }`}
+              className="hidden md:flex w-3.5 -mx-1.5 z-20 cursor-col-resize select-none items-center justify-center group shrink-0"
               title="Seret untuk mengatur lebar panel"
             >
-              <div className={`w-1 h-7 rounded-full transition-colors ${isResizing ? 'bg-white' : 'bg-zinc-600 group-hover:bg-white/80'}`} />
+              <div
+                className={`transition-all duration-200 ease-in-out rounded-full ${
+                  isResizing
+                    ? 'w-1.5 bg-blue-500 shadow-md shadow-blue-500/50'
+                    : 'w-1 bg-zinc-600 group-hover:w-1.5 group-hover:bg-blue-400'
+                }`}
+                style={{ height: isResizing ? '100%' : '40px' }}
+              />
             </div>
 
             {/* Document preview viewport */}
