@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { RefreshCw, FolderOpen, MessageCircle, Check, Info, ChevronLeft, ChevronRight, Copy, Link2 } from 'lucide-react'
+import { RefreshCw, FolderOpen, MessageCircle, Check, Info, ChevronLeft, ChevronRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { getEvidenceFilesAction, saveAssessmentAction, getAspectDriveFoldersAction, DocumentReviewInput } from '../actions'
+import { GoogleDriveIcon } from '@/components/icons/GoogleDriveIcon'
 import FullscreenButton from '@/components/FullscreenButton'
 import ReferenceDatesPanel from '@/components/ReferenceDatesPanel'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
@@ -645,21 +646,28 @@ export default function AuditClient({
                       {aspect.order_number}. {aspect.name}
                     </h4>
                     {institution.drive_folder_id ? (
-                      <button
-                        type="button"
-                        onClick={(e) => handleCopyAspectLink(e, aspect)}
-                        className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/80 transition-all shrink-0 cursor-pointer min-w-[26px] min-h-[26px] flex items-center justify-center"
-                        title="Salin link Google Drive folder aspek"
-                        aria-label="Salin link Google Drive folder aspek"
-                      >
-                        {copiedAspectOrder === aspect.order_number ? (
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 animate-in fade-in duration-200">
-                            <Check size={13} strokeWidth={3} />
-                          </span>
-                        ) : (
-                          <Link2 size={13} className="opacity-70 group-hover/aspect:opacity-100 transition-opacity" />
-                        )}
-                      </button>
+                      <div className="relative group/drivetip shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyAspectLink(e, aspect)}
+                          className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/80 transition-all cursor-pointer min-w-[26px] min-h-[26px] flex items-center justify-center"
+                          aria-label="Salin link Google Drive folder aspek"
+                        >
+                          {copiedAspectOrder === aspect.order_number ? (
+                            <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 animate-in fade-in duration-200">
+                              <Check size={13} strokeWidth={3} />
+                            </span>
+                          ) : (
+                            <GoogleDriveIcon size={14} className="opacity-70 group-hover/aspect:opacity-100 transition-opacity" />
+                          )}
+                        </button>
+                        {/* Custom tooltip — faster than native title */}
+                        <div className="pointer-events-none absolute top-full right-0 mt-1.5 z-50 opacity-0 group-hover/drivetip:opacity-100 transition-opacity delay-75 duration-150">
+                          <div className="bg-zinc-800 border border-zinc-700/60 text-zinc-200 text-[11px] font-medium px-2 py-1 rounded-lg shadow-xl whitespace-nowrap">
+                            Copy Link Aspek
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <button
                         type="button"
@@ -668,7 +676,7 @@ export default function AuditClient({
                         title="Folder Google Drive belum tersedia"
                         aria-label="Folder Google Drive belum tersedia"
                       >
-                        <Link2 size={13} />
+                        <GoogleDriveIcon size={14} />
                       </button>
                     )}
                   </div>
