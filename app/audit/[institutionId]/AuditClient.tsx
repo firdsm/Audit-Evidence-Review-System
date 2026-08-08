@@ -679,7 +679,7 @@ export default function AuditClient({
         </aside>
 
         {/* PANEL TENGAH: Google Drive Evidence Preview */}
-        <section className={`${activeTab === 'files' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-1 flex flex-col bg-zinc-900/5 overflow-hidden border-r border-zinc-800`}>
+        <section className={`${activeTab === 'files' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-1 flex flex-col bg-zinc-900/10 overflow-hidden border-r border-zinc-800`}>
           <div className={`h-12 px-3.5 border-b border-zinc-800 bg-zinc-900/20 ${activeFile ? 'hidden md:flex' : 'flex'} justify-between items-center shrink-0`}>
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Berkas Bukti (Google Drive)</span>
             <div className="flex items-center gap-2">
@@ -1052,7 +1052,7 @@ export default function AuditClient({
         </section>
 
         {/* PANEL KANAN: Form Penilaian Audit (Auto-Save) */}
-        <main className={`${activeTab === 'form' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none lg:w-96 bg-zinc-900/10 flex flex-col overflow-y-auto lg:shrink-0 select-none`}>
+        <main className={`${activeTab === 'form' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none lg:w-96 bg-zinc-900/10 flex flex-col overflow-y-auto lg:shrink-0 select-none scrollbar-none`}>
           {activeIndicator ? (
             <>
               {/* Active Indicator Title */}
