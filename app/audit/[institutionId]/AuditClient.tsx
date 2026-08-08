@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { RefreshCw, FolderOpen, MessageCircle, Check, Info, ChevronLeft, ChevronRight } from 'lucide-react'
+import { RefreshCw, FolderOpen, MessageCircle, Check, Info, ChevronLeft, ChevronRight, Copy, Link2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import { getEvidenceFilesAction, saveAssessmentAction, DocumentReviewInput } from '../actions'
+import { getEvidenceFilesAction, saveAssessmentAction, getAspectDriveFoldersAction, DocumentReviewInput } from '../actions'
 import FullscreenButton from '@/components/FullscreenButton'
 import ReferenceDatesPanel from '@/components/ReferenceDatesPanel'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
@@ -149,6 +149,37 @@ export default function AuditClient({
 
   // Indicator list sidebar collapse state (Desktop only, default: EXPANDED/false)
   const [isIndicatorCollapsed, setIsIndicatorCollapsed] = useState<boolean>(false)
+
+  // Aspect Drive folder links mapping state (aspect.order_number -> drive_folder_url)
+  const [aspectFolderLinks, setAspectFolderLinks] = useState<Record<number, string>>({})
+  const [copiedAspectOrder, setCopiedAspectOrder] = useState<number | null>(null)
+  const [copyToastMessage, setCopyToastMessage] = useState<string | null>(null)
+
+  // Fetch aspect drive folders mapping on mount / institution change
+  useEffect(() => {
+    if (!institution.drive_folder_id || !aspects.length) return
+    const orderNumbers = aspects.map((a) => a.order_number)
+    getAspectDriveFoldersAction(institution.drive_folder_id, orderNumbers).then((res) => {
+      if (res.success && res.data) {
+        setAspectFolderLinks(res.data)
+      }
+    })
+  }, [institution.drive_folder_id, aspects])
+
+  const handleCopyAspectLink = (e: React.MouseEvent, aspect: Aspect) => {
+    e.stopPropagation()
+    const link = aspectFolderLinks[aspect.order_number] || (institution.drive_folder_id ? `https://drive.google.com/drive/folders/${institution.drive_folder_id}` : null)
+    if (!link) return
+
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedAspectOrder(aspect.order_number)
+      setCopyToastMessage(`Link Google Drive ${aspect.name} tersalin`)
+      setTimeout(() => {
+        setCopiedAspectOrder(null)
+        setCopyToastMessage(null)
+      }, 3000)
+    })
+  }
 
   // Load saved sidebar width preference from localStorage on mount
   useEffect(() => {
@@ -609,9 +640,38 @@ export default function AuditClient({
             {aspects.map((aspect) => (
               <div key={aspect.id} className="p-2 space-y-1">
                 {!isIndicatorCollapsed ? (
-                  <h4 className="px-3 py-2 text-xs font-extrabold text-zinc-400 uppercase tracking-tight truncate">
-                    {aspect.order_number}. {aspect.name}
-                  </h4>
+                  <div className="px-3 py-2 flex items-center justify-between gap-2 group/aspect">
+                    <h4 className="text-xs font-extrabold text-zinc-400 uppercase tracking-tight truncate flex-1" title={`${aspect.order_number}. ${aspect.name}`}>
+                      {aspect.order_number}. {aspect.name}
+                    </h4>
+                    {institution.drive_folder_id ? (
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopyAspectLink(e, aspect)}
+                        className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/80 transition-all shrink-0 cursor-pointer min-w-[26px] min-h-[26px] flex items-center justify-center"
+                        title="Salin link Google Drive folder aspek"
+                        aria-label="Salin link Google Drive folder aspek"
+                      >
+                        {copiedAspectOrder === aspect.order_number ? (
+                          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 animate-in fade-in duration-200">
+                            <Check size={13} strokeWidth={3} />
+                          </span>
+                        ) : (
+                          <Link2 size={13} className="opacity-70 group-hover/aspect:opacity-100 transition-opacity" />
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="p-1 rounded-md text-zinc-700 opacity-40 shrink-0 cursor-not-allowed min-w-[26px] min-h-[26px] flex items-center justify-center"
+                        title="Folder Google Drive belum tersedia"
+                        aria-label="Folder Google Drive belum tersedia"
+                      >
+                        <Link2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <div className="py-1 text-center font-extrabold text-[10px] text-zinc-600 uppercase border-b border-zinc-800/40">
                     A{aspect.order_number}
@@ -1309,6 +1369,13 @@ export default function AuditClient({
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* Floating Toast Notification for Aspect Link Copy */}
+      {copyToastMessage && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-5 py-3 bg-zinc-900/95 border border-emerald-500/50 text-emerald-400 rounded-2xl shadow-2xl shadow-emerald-500/20 text-xs font-semibold backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200 pointer-events-none">
+          <Check size={16} strokeWidth={2.5} className="shrink-0 text-emerald-400" />
+          <span className="max-w-xs md:max-w-md truncate">{copyToastMessage}</span>
         </div>
       )}
     </div>

@@ -632,3 +632,38 @@ export async function upsertInstitutionNoteAction(
   }
 }
 
+/**
+ * Server action to get drive folder links for all aspects of a given institution
+ */
+export async function getAspectDriveFoldersAction(
+  institutionFolderId: string,
+  aspectOrderNumbers: number[]
+): Promise<{ success: boolean; data?: Record<number, string>; error?: string }> {
+  try {
+    if (!institutionFolderId) {
+      return { success: true, data: {} }
+    }
+
+    const aspectFolders = await listFoldersInFolder(institutionFolderId)
+    const sortedAspectFolders = aspectFolders
+      .filter((f) => f.id && f.name)
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+    const mapping: Record<number, string> = {}
+
+    for (const orderNum of aspectOrderNumbers) {
+      const matched = matchAspectFolder(sortedAspectFolders, orderNum)
+      const folderId = matched?.id || institutionFolderId
+      if (folderId) {
+        mapping[orderNum] = `https://drive.google.com/drive/folders/${folderId}`
+      }
+    }
+
+    return { success: true, data: mapping }
+  } catch (error: any) {
+    console.error('Error fetching aspect drive folders:', error)
+    return { success: false, error: error.message || 'Gagal mengambil folder aspek' }
+  }
+}
+
+
