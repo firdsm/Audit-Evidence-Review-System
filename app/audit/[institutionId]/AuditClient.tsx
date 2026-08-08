@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { RefreshCw, FolderOpen, MessageCircle, Check, Info } from 'lucide-react'
+import { RefreshCw, FolderOpen, MessageCircle, Check, Info, ChevronLeft, ChevronRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { getEvidenceFilesAction, saveAssessmentAction, DocumentReviewInput } from '../actions'
 import FullscreenButton from '@/components/FullscreenButton'
@@ -137,6 +137,75 @@ export default function AuditClient({
   // Folder exists state for active indicator
   const [folderExists, setFolderExists] = useState<boolean>(true)
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null)
+
+  // Resizable sidebar panel state for desktop layout
+  const DEFAULT_SIDEBAR_WIDTH = 256 // default 256px (w-64)
+  const MIN_SIDEBAR_WIDTH = 180
+  const MIN_PREVIEW_WIDTH = 300
+
+  const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_SIDEBAR_WIDTH)
+  const [isResizing, setIsResizing] = useState<boolean>(false)
+  const splitContainerRef = useRef<HTMLDivElement>(null)
+
+  // Indicator list sidebar collapse state (Desktop only, default: EXPANDED/false)
+  const [isIndicatorCollapsed, setIsIndicatorCollapsed] = useState<boolean>(false)
+
+  // Load saved sidebar width preference from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('aers_audit_sidebar_width')
+      if (saved) {
+        const parsed = parseInt(saved, 10)
+        if (!isNaN(parsed) && parsed >= MIN_SIDEBAR_WIDTH) {
+          setSidebarWidth(parsed)
+        }
+      }
+    } catch {
+      // ignore localStorage read errors
+    }
+  }, [])
+
+  // Handle mouse move & mouse up during drag resizing
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!splitContainerRef.current) return
+      const containerRect = splitContainerRef.current.getBoundingClientRect()
+      let newWidth = e.clientX - containerRect.left
+
+      const maxAllowedWidth = containerRect.width - MIN_PREVIEW_WIDTH
+      if (newWidth < MIN_SIDEBAR_WIDTH) newWidth = MIN_SIDEBAR_WIDTH
+      if (newWidth > maxAllowedWidth) newWidth = maxAllowedWidth
+
+      setSidebarWidth(newWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      setSidebarWidth((currentWidth) => {
+        try {
+          localStorage.setItem('aers_audit_sidebar_width', currentWidth.toString())
+        } catch {
+          // ignore localStorage write errors
+        }
+        return currentWidth
+      })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing])
 
   // Status message for empty folder / no mapping fallback
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
@@ -515,17 +584,39 @@ export default function AuditClient({
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-10">
 
         {/* PANEL KIRI: Aspects & Indicators */}
-        <aside className={`${activeTab === 'indicators' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none lg:w-80 border-r border-zinc-800 bg-zinc-900/10 flex-col overflow-hidden lg:shrink-0 select-none`}>
-          <div className="p-4 border-b border-zinc-800 bg-zinc-900/20 shrink-0">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Daftar Indikator Penilaian</span>
+        <aside className={`${activeTab === 'indicators' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none ${isIndicatorCollapsed ? 'lg:w-16' : 'lg:w-80'} transition-all duration-300 ease-in-out border-r border-zinc-800 bg-zinc-900/10 flex-col overflow-hidden lg:shrink-0 select-none relative group/sidebar`}>
+          {/* Header & Toggle Button */}
+          <div className="h-12 px-3.5 border-b border-zinc-800 bg-zinc-900/20 shrink-0 flex justify-between items-center gap-2">
+            {!isIndicatorCollapsed && (
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 truncate transition-opacity duration-200">
+                Daftar Indikator Penilaian
+              </span>
+            )}
+            <button
+              onClick={() => setIsIndicatorCollapsed(!isIndicatorCollapsed)}
+              className={`p-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-400 hover:text-white transition-all cursor-pointer shadow-sm ${isIndicatorCollapsed ? 'mx-auto' : 'ml-auto'}`}
+              title={isIndicatorCollapsed ? 'Perluas Daftar Indikator' : 'Ciutkan Daftar Indikator'}
+            >
+              {isIndicatorCollapsed ? (
+                <ChevronRight size={15} />
+              ) : (
+                <ChevronLeft size={15} />
+              )}
+            </button>
           </div>
 
-          <div className="flex-1 divide-y divide-zinc-900 overflow-y-auto">
+          <div className="flex-1 divide-y divide-zinc-900 overflow-y-auto scrollbar-none">
             {aspects.map((aspect) => (
               <div key={aspect.id} className="p-2 space-y-1">
-                <h4 className="px-3 py-2 text-xs font-extrabold text-zinc-400 uppercase tracking-tight">
-                  {aspect.order_number}. {aspect.name}
-                </h4>
+                {!isIndicatorCollapsed ? (
+                  <h4 className="px-3 py-2 text-xs font-extrabold text-zinc-400 uppercase tracking-tight truncate">
+                    {aspect.order_number}. {aspect.name}
+                  </h4>
+                ) : (
+                  <div className="py-1 text-center font-extrabold text-[10px] text-zinc-600 uppercase border-b border-zinc-800/40">
+                    A{aspect.order_number}
+                  </div>
+                )}
 
                 <div className="space-y-0.5">
                   {aspect.indicators.map((ind) => {
@@ -539,22 +630,44 @@ export default function AuditClient({
                           setActiveIndicator(ind)
                           setActiveTab('form')
                         }}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-xs font-medium transition-all flex justify-between items-start gap-2 ${
+                        title={`${ind.code}: ${ind.name}`}
+                        className={`w-full text-left rounded-xl transition-all flex items-center ${
+                          isIndicatorCollapsed
+                            ? 'p-2 justify-center'
+                            : 'px-4 py-3 justify-between items-start gap-2 text-xs font-medium'
+                        } ${
                           active
                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/15'
                             : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
                         }`}
                       >
-                        <span className="leading-relaxed">
-                          <span className="font-bold mr-1">{ind.code}</span> {ind.name}
-                        </span>
+                        {!isIndicatorCollapsed ? (
+                          <>
+                            <span className="leading-relaxed">
+                              <span className="font-bold mr-1">{ind.code}</span> {ind.name}
+                            </span>
 
-                        {completed && (
-                          <span className={`shrink-0 mt-0.5 ${active ? 'text-white' : 'text-green-500'}`}>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </span>
+                            {completed && (
+                              <span className={`shrink-0 mt-0.5 ${active ? 'text-white' : 'text-green-500'}`}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`text-[10px] font-bold ${active ? 'text-white' : 'text-zinc-300'}`}>
+                              {ind.code.replace('IND-', '')}
+                            </span>
+                            {completed && (
+                              <span className={`shrink-0 ${active ? 'text-white' : 'text-green-500'}`}>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
                         )}
                       </button>
                     )
@@ -567,7 +680,7 @@ export default function AuditClient({
 
         {/* PANEL TENGAH: Google Drive Evidence Preview */}
         <section className={`${activeTab === 'files' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-1 flex flex-col bg-zinc-900/5 overflow-hidden border-r border-zinc-800`}>
-          <div className={`p-4 border-b border-zinc-800 bg-zinc-900/20 ${activeFile ? 'hidden md:flex' : 'flex'} justify-between items-center shrink-0`}>
+          <div className={`h-12 px-3.5 border-b border-zinc-800 bg-zinc-900/20 ${activeFile ? 'hidden md:flex' : 'flex'} justify-between items-center shrink-0`}>
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Berkas Bukti (Google Drive)</span>
             <div className="flex items-center gap-2">
               {folderExists && (
@@ -730,9 +843,15 @@ export default function AuditClient({
             </div>
           )}
 
-          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          <div
+            ref={splitContainerRef}
+            className={`flex-1 flex flex-col md:flex-row overflow-hidden ${isResizing ? 'select-none' : ''}`}
+          >
             {/* Sidebar file list */}
-            <div className={`w-full md:w-64 border-b md:border-b-0 md:border-r border-zinc-800 bg-zinc-900/10 ${activeFile ? 'hidden md:flex' : 'flex'} flex-col overflow-y-auto shrink-0`}>
+            <div
+              style={{ width: `${sidebarWidth}px` }}
+              className={`w-full md:w-[var(--sidebar-width)] border-b md:border-b-0 md:border-r border-zinc-800 bg-zinc-900/10 ${activeFile ? 'hidden md:flex' : 'flex'} flex-col overflow-y-auto shrink-0`}
+            >
               {filesLoading ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 gap-2 text-zinc-500">
                   <svg className="animate-spin h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24">
@@ -819,8 +938,21 @@ export default function AuditClient({
               )}
             </div>
 
+            {/* ── DESKTOP RESIZABLE DIVIDER HANDLE ── */}
+            <div
+              onMouseDown={startResizing}
+              className={`hidden md:flex w-2.5 hover:w-3 -mx-1 z-20 cursor-col-resize select-none items-center justify-center transition-all duration-150 group shrink-0 ${
+                isResizing
+                  ? 'bg-blue-500/80 shadow-lg shadow-blue-500/30'
+                  : 'bg-zinc-800/80 hover:bg-blue-500/50'
+              }`}
+              title="Seret untuk mengatur lebar panel"
+            >
+              <div className={`w-1 h-7 rounded-full transition-colors ${isResizing ? 'bg-white' : 'bg-zinc-600 group-hover:bg-white/80'}`} />
+            </div>
+
             {/* Document preview viewport */}
-            <div className={`flex-1 bg-zinc-950 p-4 ${activeFile ? 'flex' : 'hidden md:flex'} flex-col justify-between overflow-y-auto min-h-[300px]`}>
+            <div className={`flex-1 bg-zinc-950 p-4 ${activeFile ? 'flex' : 'hidden md:flex'} flex-col justify-between overflow-y-auto min-h-[300px] ${isResizing ? 'pointer-events-none select-none' : ''}`}>
               {activeFile ? (
                 <div className="flex-1 flex flex-col overflow-hidden space-y-4">
                   {/* Preview Area */}
