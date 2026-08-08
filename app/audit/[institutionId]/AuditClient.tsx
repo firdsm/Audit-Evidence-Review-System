@@ -612,10 +612,10 @@ export default function AuditClient({
       </div>
 
       {/* 3-Panel Content Area */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-10">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden relative z-10">
 
         {/* PANEL KIRI: Aspects & Indicators */}
-        <aside className={`${activeTab === 'indicators' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none ${isIndicatorCollapsed ? 'lg:w-16' : 'lg:w-80'} transition-all duration-300 ease-in-out border-r border-zinc-800 bg-zinc-900/10 flex-col overflow-hidden lg:shrink-0 select-none relative group/sidebar`}>
+        <aside className={`${activeTab === 'indicators' ? 'flex flex-col flex-1 w-full min-h-0' : 'hidden'} lg:flex lg:flex-none ${isIndicatorCollapsed ? 'lg:w-16' : 'lg:w-80'} transition-all duration-300 ease-in-out border-r border-zinc-800 bg-zinc-900/10 overflow-hidden lg:shrink-0 relative group/sidebar`}>
           {/* Header & Toggle Button */}
           <div className="h-12 px-3.5 border-b border-zinc-800 bg-zinc-900/20 shrink-0 flex justify-between items-center gap-2">
             {!isIndicatorCollapsed && (
@@ -636,7 +636,7 @@ export default function AuditClient({
             </button>
           </div>
 
-          <div className="flex-1 divide-y divide-zinc-900 overflow-y-auto scrollbar-none">
+          <div className="flex-1 min-h-0 divide-y divide-zinc-900 overflow-y-auto scrollbar-none">
             {aspects.map((aspect) => (
               <div key={aspect.id} className="p-2 space-y-1">
                 {!isIndicatorCollapsed ? (
@@ -1116,7 +1116,7 @@ export default function AuditClient({
         </section>
 
         {/* PANEL KANAN: Form Penilaian Audit (Auto-Save) */}
-        <main className={`${activeTab === 'form' ? 'flex-1 w-full' : 'hidden'} lg:flex lg:flex-none lg:w-96 bg-zinc-900/10 flex flex-col overflow-y-auto lg:shrink-0 select-none scrollbar-none`}>
+        <main className={`${activeTab === 'form' ? 'flex flex-col flex-1 w-full min-h-0' : 'hidden'} lg:flex lg:flex-none lg:w-96 bg-zinc-900/10 overflow-y-auto lg:shrink-0 scrollbar-none`}>
           {activeIndicator ? (
             <>
               {/* Active Indicator Title */}
